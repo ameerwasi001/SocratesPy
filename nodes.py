@@ -12,6 +12,10 @@ class Var(Symbol):
     def __str__(self):
         return "var " + self.name
 
+class Term(Symbol):
+    def __init__(self, value):
+        super().__init__(value)
+
 class Fact:
     def __init__(self, name, args):
         self.name = name
@@ -32,8 +36,8 @@ class Rule:
         return f"{str(self.fact)}" if self.condition == None else f"{str(self.fact)} :- {str(self.condition)}"
 
 class Rules:
-    def __init__(self):
-        self.env = {}
+    def __init__(self, given=None):
+        self.env = {} if given==None else given
     
     def add(self, name, thing):
         current = self.env.get(name)
