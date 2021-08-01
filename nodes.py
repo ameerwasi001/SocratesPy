@@ -1,20 +1,16 @@
-class Symbol:
+class Var:
+    def __init__(self, value):
+        self.name = value
+
+    def __str__(self):
+        return "var " + self.name
+
+class Term:
     def __init__(self, value):
         self.name = value
     
     def __str__(self):
         return self.name
-
-class Var(Symbol):
-    def __init__(self, value):
-        super().__init__(value)
-
-    def __str__(self):
-        return "var " + self.name
-
-class Term(Symbol):
-    def __init__(self, value):
-        super().__init__(value)
 
 class Fact:
     def __init__(self, name, args):
