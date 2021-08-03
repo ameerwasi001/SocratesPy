@@ -1,6 +1,6 @@
 import ast
 import utils
-from nodes import Var, Term, Fact, Rule, Rules
+from nodes import Var, Term, Fact, Conjuction, Rule, Rules
 from functools import *
 
 class SelectiveVistor(ast.NodeTransformer):
@@ -29,11 +29,16 @@ class SelectiveVistor(ast.NodeTransformer):
         arity_checker = CorrectArgumentRules(rules)
         arity_checker.visit_all(rules)
         python_code_rules = RulesToPython().visit(rules)
-        python_code = f"from {self.nodes_path} import Var, Term, Fact, Rule, Rules\n"
+        python_code = f"from {self.nodes_path} import Var, Term, Fact, Conjuction, Rule, Rules\n"
         python_code += f"\n{target_name} = {self.solver_path}({python_code_rules})\n"
         return ast.parse(python_code)
 
 class ExprVisitor(ast.NodeVisitor):
+    def visit_BinOp(self, node: ast.BinOp):
+        right = self.visit(node.right)
+        left = self.visit(node.left)
+        return Conjuction(left, right)
+
     def visit_Subscript(self, node: ast.Subscript):
         if isinstance(node.slice.value, ast.Subscript): args = [self.visit(node.slice.value)]
         else: args = list(map(self.visit, [node.slice.value] if isinstance(node.slice.value, ast.Name) else node.slice.value.elts))
@@ -68,6 +73,8 @@ class SyntaxValidator(ast.NodeVisitor):
     def __init__(self, *args, **kwargs):
         self.allowed_nodes = [
         ast.Expr,
+        ast.BitAnd,
+        ast.BinOp,
         ast.Assign,
         ast.Subscript,
         ast.Name
@@ -87,6 +94,10 @@ class SyntaxValidator(ast.NodeVisitor):
         if not isinstance(target, ast.Subscript):
             raise Exception("Target is only allowed to be a subscript or a name")
         if not isinstance(node.value, ast.Subscript):
+            if isinstance(node.value, ast.BinOp) and isinstance(node.value.op, ast.BitAnd):
+                self.visit(node.value.left)
+                self.visit(node.value.right)
+                return
             raise Exception("Assigments are only allowed to be subscripts or names")
         self.visit(target)
         self.visit(node.value)
@@ -120,6 +131,9 @@ class TermCreator(RulesVisitor):
             return Term(fact.name)
         return Fact(fact.name, list(map(self.visit, fact.args)))
 
+    def visit_Conjuction(self, conjuction: Conjuction):
+        return Conjuction(self.visit(conjuction.left), self.visit(conjuction.right))
+
     def visit_Var(self, var: Var): return var
 
 class CorrectArgumentRules(RulesVisitor):
@@ -145,6 +159,10 @@ class CorrectArgumentRules(RulesVisitor):
             raise Exception(f"{str(len(fact))} is an invalid arity for {fact.name}")
         list(map(self.visit, fact.args))
 
+    def visit_Conjuction(self, conjuction: Conjuction):
+        self.visit(conjuction.right)
+        self.visit(conjuction.left)
+
     def visit_Var(self, node): pass
     def visit_Term(self, node): pass
 
@@ -158,6 +176,9 @@ class RulesToPython(RulesVisitor):
     def visit_Fact(self, fact: Fact):
         name = "\"" + fact.name + "\""
         return f"Fact({name}, [{', '.join(list(map(self.visit, fact.args)))}])"
+
+    def visit_Conjuction(self, conjuction: Conjuction):
+        return f"Conjuction({self.visit(conjuction.right)}, {self.visit(conjuction.left)})"
 
     def visit_Term(self, node):
         return f'Term("{node.name}")'

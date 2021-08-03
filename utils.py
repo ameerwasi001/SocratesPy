@@ -17,9 +17,11 @@ def make_fact(node):
         return nodes.Fact(node.value.id, [make_id(node.slice.value.id)])
     return nodes.Fact(node.value.id, list(map(lambda a: make_id(a.id), node.slice.value.elts)))
 
-
 def tab_lines(lines: str):
     x = ""
     for line in lines.splitlines():
         x += "\n " + line
     return x
+
+def str_dict(d):
+    return {str(k):str(v) for k, v in d.items()}

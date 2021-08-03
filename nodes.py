@@ -23,6 +23,14 @@ class Fact:
     def __str__(self):
         return f"{self.name}({', '.join(list(map(str, self.args)))})" if len(self.args) > 0 else f"{self.name}"
 
+class Conjuction:
+    def __init__(self, right, left):
+        self.right = right
+        self.left = left
+    
+    def __str__(self):
+        return f"{str(self.right)} & {str(self.left)}"
+
 class Rule:
     def __init__(self, fact, condition=None):
         self.fact = fact
