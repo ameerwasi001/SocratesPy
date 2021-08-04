@@ -31,6 +31,13 @@ class Conjuction:
     def __str__(self):
         return f"{str(self.right)} & {str(self.left)}"
 
+class Goals:
+    def __init__(self, _list):
+        self.goals = _list
+    
+    def __str__(self):
+        return f"{' & '.join(map(str, self.goals))}"
+
 class Rule:
     def __init__(self, fact, condition=None):
         self.fact = fact

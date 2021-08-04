@@ -4,33 +4,35 @@ from functools import reduce
 from multipleDispatch import MultipleDispatch
 from nodes import Var, Term, Conjuction, Fact, Rule, Rules
 
-class DisjointSets:
+class DisjointOrderedSets:
     @staticmethod
     def normalizeUniques(this, uniques):
-        disjoint_sets = DisjointSets()
-        disjoint_sets.sets = {frozenset({uniques.get(k, k) for k in set_}) for set_ in this.sets}
+        disjoint_sets = DisjointOrderedSets()
+        rels = {(tuple(uniques.get(x, x) for x in rel_order), frozenset({uniques.get(k, k) for k in rel})) for rel_order, rel in this.sets}
+        for rel_order, rel in rels:
+            disjoint_sets.add_relation(rel_order, rel)
         return disjoint_sets
 
     def __init__(self):
         self.sets = set()
 
-    def add_relation(self, given_set):
-        for set_ in frozenset(self.sets):
-            if len(set_.intersection(given_set)) != 0:
-                self.sets.remove(set_)
-                self.sets.add(frozenset().union(set_, frozenset(given_set)))
+    def add_relation(self, given_tup, given_set):
+        for rel_order, rel in frozenset(self.sets):
+            if len(rel.intersection(frozenset(given_set))) != 0:
+                self.sets.remove((rel_order, rel))
+                self.sets.add((rel_order + given_tup, frozenset().union(rel, frozenset(given_set))))
                 return True
-        self.sets.add(frozenset(given_set))
+        self.sets.add((given_tup, frozenset(given_set)))
         return True
 
     def merge(self, other, unifier):
-        for set_ in other.sets:
-            self.add_relation(set_)
+        for rel_order, rel in other.sets:
+            self.add_relation(rel_order, rel)
         x = self.verify_relations(unifier.env, unifier)
         return x
 
     def get_relation_involving(self, var: str):
-        for set_ in self.sets:
+        for _, set_ in self.sets:
             if var in set_: return set_
         return None
 
@@ -47,18 +49,18 @@ class DisjointSets:
         return True
 
     def verify_relations(self, env, unifier):
-        for rel in self.sets:
+        for _, rel in self.sets:
             if not self.verify_relation(env, rel, unifier): return False
         return True
 
     def clone(self):
-        rels = DisjointSets()
-        rels.sets = {frozenset({k for k in rel}) for rel in self.sets}
+        rels = DisjointOrderedSets()
+        rels.sets = {(tuple(x for x in xs), frozenset({k for k in rel})) for xs, rel in self.sets}
         return rels
 
     def define_all(self, env):
         definitions = {}
-        for rel in self.sets:
+        for _, rel in self.sets:
             defined = None
             for k in rel:
                 val = env.get_variable(k)
@@ -72,16 +74,16 @@ class DisjointSets:
         return definitions
 
     def __str__(self):
-        ls = ["{" + ", ".join([str(x) for x in s]) + "}" for s in self.sets]
-        return "Relations: " + utils.tab_lines("\n".join(ls))
+        ls = ["{" + ", ".join([str(x) for x in s]) + "}" for _, s in self.sets]
+        return "Relations: " + ", ".join(ls)
 
 class Substitutions:
     @staticmethod
     def normalizeUniques(this, uniques):
         subs = Substitutions()
         uniques = {v:k for k, v in uniques.items()}
-        subs.substitutions = {uniques[k]:v for k, v in this.substitutions.items()}
-        subs.relations = DisjointSets.normalizeUniques(this.relations, uniques)
+        subs.substitutions = {uniques.get(k, k):v for k, v in this.substitutions.items()}
+        subs.relations = DisjointOrderedSets.normalizeUniques(this.relations, uniques)
         return subs
 
     @staticmethod
@@ -90,9 +92,15 @@ class Substitutions:
         resolutions = dict(this.relations.define_all(this), **this.substitutions)
         return {k:resolver.visit(v, this) for k, v in resolutions.items()}
 
+    @staticmethod
+    def optionally_resolve(this):
+        substituter = Substituter()
+        subs = dict(this.relations.define_all(this), **this.substitutions)
+        return {k:substituter.visit(v, this) for k, v in subs.items()}
+
     def __init__(self):
         self.substitutions = {}
-        self.relations = DisjointSets()
+        self.relations = DisjointOrderedSets()
 
     def add_variable(self, unifier, var: str, other):
         val = self.get_variable(var)
@@ -104,7 +112,7 @@ class Substitutions:
         return True
 
     def add_relation(self, unifier, a: str, b: str):
-        self.relations.add_relation({a, b})
+        self.relations.add_relation((a, b), frozenset({a, b}))
         return self.relations.verify_relations(self, unifier)
 
     def get_variable(self, var: str):
@@ -117,6 +125,13 @@ class Substitutions:
                 if val == None: continue
                 return val
             return None
+        return val
+
+    def resolve_variable(self, var: str):
+        val = self.get_variable(var)
+        if val == None:
+            for order, set_ in self.relations.sets:
+                if var in set_: return order[0]
         return val
 
     def merge(self, other, unifier):
@@ -133,8 +148,8 @@ class Substitutions:
 
     def __str__(self):
         return ("Substitutions: " +
-            utils.tab_lines("\n".join([f"{str(a)}: {str(b)}" for a, b in self.substitutions.items()])) 
-            + ("" if len(self.relations.sets) == 0 else "\n" + str(self.relations)))
+            ", ".join([f"{str(a)}: {str(b)}" for a, b in self.substitutions.items()])
+            + ("" if len(self.relations.sets) == 0 else " || " + str(self.relations)))
 
 class Unifier:
     @staticmethod
@@ -197,9 +212,12 @@ class UniqueVariableSubstitutor(RulesVisitor):
         self.current_max = 0 if len(sorted_keys) == 0 else sorted_keys[-1]
         super().__init__(*args, **kwargs)
 
+    def clear_vars(self):
+        self.subs.clear()
+
     def unique_var_name(self, name):
         self.current_max += 1
-        self.subs[name] = "V-" + str(self.current_max)
+        self.subs[name] = f"V-{str(self.current_max)}"
         return self.subs[name]
 
     def visit_Term(self, term: Term): return term
@@ -240,6 +258,13 @@ class Resolver(RulesVisitor):
     def visit_Rule(self, rule: Rule, env: Substitutions):
         return Rule(self.visit(rule.fact, env), None if rule.condition == None else self.visit(rule.condition, env))
 
+class Substituter(Resolver):
+    def visit_Var(self, var: Var, env: Substitutions):
+        val = env.get_variable(var.name)
+        if val == None:
+            return Var(env.resolve_variable(var.name))
+        return val
+
 def normalizeUniqueSubstitutions(subs, given):
     new_subs = {v:k for k, v in subs.items()}
     substitutor = UniqueVariableSubstitutor(new_subs)
@@ -271,4 +296,4 @@ def normalizeUniqueSubstitutions(subs, given):
 # print("First one unifies:", res1, "and the second one:", res2)
 # print("Both unify together:", bool(new_unifier))
 # if new_unifier:
-#     print(utils.str_dict(Substitutions.resolve(new_unifier.env)))
+#     print(Substituter().visit(ty2, new_unifier.env))

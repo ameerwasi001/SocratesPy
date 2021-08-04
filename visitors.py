@@ -1,6 +1,6 @@
 import ast
 import utils
-from nodes import Var, Term, Fact, Conjuction, Rule, Rules
+from nodes import Var, Term, Fact, Conjuction, Goals, Rule, Rules
 from functools import *
 
 class SelectiveVistor(ast.NodeTransformer):
@@ -26,10 +26,12 @@ class SelectiveVistor(ast.NodeTransformer):
         visitor.initialize()
         list(map(visitor.visit, node.body))
         rules = TermCreator().visit(visitor.env)
+        goalCreator = GoalCreator()
+        rules = GoalCreator().visit(rules)
         arity_checker = CorrectArgumentRules(rules)
         arity_checker.visit_all(rules)
         python_code_rules = RulesToPython().visit(rules)
-        python_code = f"from {self.nodes_path} import Var, Term, Fact, Conjuction, Rule, Rules\n"
+        python_code = f"from {self.nodes_path} import Var, Term, Fact, Conjuction, Goals, Rule, Rules\n"
         python_code += f"\n{target_name} = {self.solver_path}({python_code_rules})\n"
         return ast.parse(python_code)
 
@@ -136,6 +138,27 @@ class TermCreator(RulesVisitor):
 
     def visit_Var(self, var: Var): return var
 
+class GoalCreator(RulesVisitor):
+    def visit_Rules(self, rules: Rules):
+        return Rules({k:list(map(self.visit, vs)) for k, vs in rules.env.items()})
+
+    def visit_Rule(self, rule: Rule):
+        return Rule(self.visit(rule.fact), None if rule.condition == None else self.visit(rule.condition))
+
+    def visit_Fact(self, fact: Fact):
+        if len(fact) == 0:
+            return Term(fact.name)
+        return Fact(fact.name, list(map(self.visit, fact.args)))
+
+    def visit_Conjuction(self, conjuction: Conjuction):
+        def conjuction_recursive_list(conjuction):
+            if not isinstance(conjuction, Conjuction): return [conjuction]
+            return conjuction_recursive_list(conjuction.left) + conjuction_recursive_list(conjuction.right)
+        return Goals(conjuction_recursive_list(conjuction))
+
+    def visit_Var(self, var: Var): return var
+    def visit_Term(self, term: Term): return term
+
 class CorrectArgumentRules(RulesVisitor):
     def __init__(self, env: Rules):
         self.env = {k:set([len(v.fact) for v in vs]) for k, vs in env.env.items()}
@@ -154,14 +177,13 @@ class CorrectArgumentRules(RulesVisitor):
     def visit_Fact(self, fact: Fact):
         vals = self.env.get(fact.name)
         if vals is None:
-            raise Exception(f"{fact.name} is not an defined")
+            return
         if not (len(fact) in vals):
             raise Exception(f"{str(len(fact))} is an invalid arity for {fact.name}")
         list(map(self.visit, fact.args))
 
-    def visit_Conjuction(self, conjuction: Conjuction):
-        self.visit(conjuction.right)
-        self.visit(conjuction.left)
+    def visit_Goals(self, goals: Goals):
+        list(map(self.visit, goals.goals))
 
     def visit_Var(self, node): pass
     def visit_Term(self, node): pass
@@ -176,6 +198,9 @@ class RulesToPython(RulesVisitor):
     def visit_Fact(self, fact: Fact):
         name = "\"" + fact.name + "\""
         return f"Fact({name}, [{', '.join(list(map(self.visit, fact.args)))}])"
+
+    def visit_Goals(self, goals: Goals):
+        return f"Goals([{', '.join(list(map(self.visit, goals.goals)))}])"
 
     def visit_Conjuction(self, conjuction: Conjuction):
         return f"Conjuction({self.visit(conjuction.right)}, {self.visit(conjuction.left)})"
