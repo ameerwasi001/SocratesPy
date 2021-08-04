@@ -17,6 +17,7 @@ class Query:
         self.unique_substitutor = UniqueVariableSubstitutor()
 
     def lookup(self, node):
+        self.unique_substitutor.clear_vars()
         return getattr(self, f"lookup_{type(node).__name__}")(node)
 
     def lookup_Fact(self, fact: Fact):
@@ -35,5 +36,4 @@ class Query:
                         new_unifier = Unifier()
                         unification = new_unifier.unify(body, item)
                         if unification == None or unification == False: continue
-                        self.unique_substitutor.clear_vars()
                         yield Substituter().visit(new_fact, new_unifier.env)
