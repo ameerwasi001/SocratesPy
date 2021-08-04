@@ -14,7 +14,7 @@ class KnowledgeBase:
 class Query:
     def __init__(self, knowledge):
         self.knowledge_base = knowledge
-        self.substitutor = UniqueVariableSubstitutor()
+        self.unique_substitutor = UniqueVariableSubstitutor()
 
     def lookup(self, node):
         return getattr(self, f"lookup_{type(node).__name__}")(node)
@@ -23,7 +23,7 @@ class Query:
         possibilities = self.knowledge_base.knowledge.get(fact.name)
         if possibilities == None: return None
         for rule in possibilities:
-            fresh = UniqueVariableSubstitutor().visit(rule)
+            fresh = self.unique_substitutor.visit(rule)
             unifier = Unifier()
             match = unifier.unify(fresh.fact, fact)
             if match:
@@ -34,5 +34,6 @@ class Query:
                     for item in self.lookup(body):
                         new_unifier = Unifier()
                         unification = new_unifier.unify(body, item)
-                        if unification == None: continue
+                        if unification == None or unification == False: continue
+                        self.unique_substitutor.clear_vars()
                         yield Substituter().visit(new_fact, new_unifier.env)
