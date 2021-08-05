@@ -49,7 +49,7 @@ class DisjointOrderedSets:
         return True
 
     def verify_relations(self, env, unifier):
-        for _, rel in self.sets:
+        for _, rel in frozenset(self.sets):
             if not self.verify_relation(env, rel, unifier): return False
         return True
 
@@ -113,7 +113,9 @@ class Substitutions:
 
     def add_relation(self, unifier, a: str, b: str):
         self.relations.add_relation((a, b), frozenset({a, b}))
-        return self.relations.verify_relations(self, unifier)
+        if len({a, b}) > 1:
+            return self.relations.verify_relations(self, unifier)
+        return True
 
     def get_variable(self, var: str):
         val = self.substitutions.get(var)
