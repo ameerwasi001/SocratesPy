@@ -2,7 +2,7 @@ import utils
 from visitors import RulesVisitor
 from functools import reduce
 from multipleDispatch import MultipleDispatch
-from unificationVisitor import Unifier, UniqueVariableSubstitutor, Substitutions, Substituter, normalizeUniqueSubstitutions
+from unificationVisitor import Unifier, UniqueVariableSubstitutor, Substitutions, Substituter
 from nodes import Var, Term, Conjuction, Fact, Rule, Rules
 
 class KnowledgeBase:

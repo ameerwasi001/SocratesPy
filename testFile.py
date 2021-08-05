@@ -35,6 +35,6 @@ with addition_rules in SocraticSolver:
     add[z, X, X]
     add[s[X], Y, s[Z]] = add[X, Y, Z]
 
-for sub in addition_rules.lookup(Fact("add", [Fact("s", [Fact("s", [Fact("s", [Term("z")])])]), Fact("s", [Fact("s", [Term("z")])]), Var("A")])):
+for sub in addition_rules.lookup(Fact("add", [Fact("s", [Fact("s", [Term("z")])]), Var("A"), Fact("s", [Fact("s", [Fact("s", [Fact("s", [Fact("s", [Term("z")])])])])])])):
     # rx = utils.str_dict(Substitutions.optionally_resolve(unifier.env))
     print(sub)

@@ -262,13 +262,10 @@ class Substituter(Resolver):
     def visit_Var(self, var: Var, env: Substitutions):
         val = env.get_variable(var.name)
         if val == None:
-            return Var(env.resolve_variable(var.name))
+            x = env.resolve_variable(var.name)
+            if x == None: return Var(var.name)
+            return Var(x)
         return val
-
-def normalizeUniqueSubstitutions(subs, given):
-    new_subs = {v:k for k, v in subs.items()}
-    substitutor = UniqueVariableSubstitutor(new_subs)
-    return utils.fst(substitutor.substitute(given))
 
 # # Unification Basic test
 # unifier = Unifier()
