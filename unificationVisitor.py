@@ -240,34 +240,40 @@ class UniqueVariableSubstitutor(RulesVisitor):
 
     def substitute(self, given):
         new_node = self.visit(given)
-        return (new_node, self.subs)
+        return new_node
 
 class Resolver(RulesVisitor):
-    def visit_Term(self, term: Term, env: Substitutions): return term
+    def __init__(self, env, _resolved_env=False):
+        self.env = env if _resolved_env else substitute_environment(env)
+        super().__init__()
 
-    def visit_Var(self, var: Var, env: Substitutions):
-        val = env.get_variable(var.name)
+    def visit_Term(self, term: Term): return term
+
+    def visit_Var(self, var: Var):
+        val = self.env.get_variable(var.name)
         if val == None:
-            raise Exception(f"Could not get variable {var}, since it has no definitions and is only related to {env.relations.sets}")
+            raise Exception(f"Could not get variable {var}, since it has no definitions and is only related to {self.env.relations.sets}")
         return val
 
-    def visit_Fact(self, fact: Fact, env: Substitutions):
-        return Fact(fact.name, list(map(lambda node: self.visit(node, env), fact.args)))
+    def visit_Fact(self, fact: Fact):
+        return Fact(fact.name, list(map(self.visit, fact.args)))
 
-    def visit_Conjuction(self, conjuction: Conjuction, env: Substitutions):
-        return Conjuction(self.visit(conjuction.right, env), self.visit(conjuction.left, env))
-
-    def visit_Rule(self, rule: Rule, env: Substitutions):
-        return Rule(self.visit(rule.fact, env), None if rule.condition == None else self.visit(rule.condition, env))
+    def visit_Rule(self, rule: Rule):
+        return Rule(self.visit(rule.fact), None if rule.condition == None else self.visit(rule.condition))
 
 class Substituter(Resolver):
-    def visit_Var(self, var: Var, env: Substitutions):
-        val = env.get_variable(var.name)
+    def visit_Var(self, var: Var):
+        val = self.env.get_variable(var.name)
         if val == None:
-            x = env.resolve_variable(var.name)
+            x = self.env.resolve_variable(var.name)
             if x == None: return Var(var.name)
             return Var(x)
         return val
+
+def substitute_environment(env: Substitutions):
+    new_env = env.clone()
+    new_env.substitutions = {k:Substituter(env, _resolved_env=True).visit(v) for k,v in new_env.substitutions.items()}
+    return new_env
 
 # # Unification Basic test
 # unifier = Unifier()
@@ -296,3 +302,4 @@ class Substituter(Resolver):
 # print("Both unify together:", bool(new_unifier))
 # if new_unifier:
 #     print(Substituter().visit(ty2, new_unifier.env))
+

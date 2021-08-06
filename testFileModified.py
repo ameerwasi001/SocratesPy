@@ -19,3 +19,5 @@ from nodes import Var, Term, Fact, Conjuction, Goals, Rule, Rules
 addition_rules = KnowledgeBase({'add': [Rule(Fact('add', [Term('z'), Var('X'), Var('X')]), None), Rule(Fact('add', [Fact('s', [Var('X')]), Var('Y'), Fact('s', [Var('Z')])]), Fact('add', [Var('X'), Var('Y'), Var('Z')]))]})
 for sub in addition_rules.lookup(Fact('add', [Fact('s', [Fact('s', [Term('z')])]), Var('A'), Fact('s', [Fact('s', [Fact('s', [Fact('s', [Fact('s', [Term('z')])])])])])])):
     print(sub)
+for sub in addition_rules.lookup(Fact('add', [Var('A'), Fact('s', [Var('A')]), Fact('s', [Fact('s', [Fact('s', [Term('z')])])])])):
+    print(sub)

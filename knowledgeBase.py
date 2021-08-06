@@ -24,16 +24,16 @@ class Query:
         possibilities = self.knowledge_base.knowledge.get(fact.name)
         if possibilities == None: return None
         for rule in possibilities:
-            fresh = self.unique_substitutor.visit(rule)
+            fresh = self.unique_substitutor.substitute(rule)
             unifier = Unifier()
             match = unifier.unify(fresh.fact, fact)
             if match:
-                new_fact = Substituter().visit(fresh.fact, unifier.env)
+                new_fact = Substituter(unifier.env).visit(fresh.fact)
                 if fresh.condition == None: yield new_fact
                 else:
-                    body = Substituter().visit(fresh.condition, unifier.env)
+                    body = Substituter(unifier.env).visit(fresh.condition)
                     for item in self.lookup(body):
                         new_unifier = Unifier()
                         unification = new_unifier.unify(body, item)
                         if unification == None or unification == False: continue
-                        yield Substituter().visit(new_fact, new_unifier.env)
+                        yield Substituter(new_unifier.env).visit(new_fact)
