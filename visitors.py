@@ -3,7 +3,25 @@ import utils
 from nodes import Var, Term, Fact, Conjuction, Goals, Rule, Rules
 from functools import *
 
-class SelectiveVistor(ast.NodeTransformer):
+def make_code_and_validate_nodes(target_name, body, nodes_path, solver_path, include_imports=False):
+    validator = SyntaxValidator()
+    list(map(validator.visit, body))
+    visitor = FullTransformerVisitor()
+    visitor.initialize()
+    list(map(visitor.visit, body))
+    rules = TermCreator().visit(visitor.env)
+    goalCreator = GoalCreator()
+    rules = GoalCreator().visit(rules)
+    arity_checker = CorrectArgumentRules(rules)
+    arity_checker.visit_all(rules)
+    python_code_rules = RulesToPython().visit(rules)
+    python_code = ""
+    if include_imports:
+        python_code += f"from {nodes_path} import Var, Term, Fact, Conjuction, Goals, Rule, Rules\n"
+    python_code += f"\n{target_name} = {solver_path}({python_code_rules})\n"
+    return ast.parse(python_code)
+
+class NodeFinderVistor(ast.NodeTransformer):
     def initialize(self, nodes_path, solver):
         self.nodes_path = nodes_path
         self.solver_path = solver
@@ -19,21 +37,7 @@ class SelectiveVistor(ast.NodeTransformer):
         left = comp_expr.left
         if not (isinstance(left, ast.Name) and right.id == "SocraticSolver" and isinstance(right, ast.Name)):
             return node
-        target_name = left.id
-        validator = SyntaxValidator()
-        list(map(validator.visit, node.body))
-        visitor = FullVisitor()
-        visitor.initialize()
-        list(map(visitor.visit, node.body))
-        rules = TermCreator().visit(visitor.env)
-        goalCreator = GoalCreator()
-        rules = GoalCreator().visit(rules)
-        arity_checker = CorrectArgumentRules(rules)
-        arity_checker.visit_all(rules)
-        python_code_rules = RulesToPython().visit(rules)
-        python_code = f"from {self.nodes_path} import Var, Term, Fact, Conjuction, Goals, Rule, Rules\n"
-        python_code += f"\n{target_name} = {self.solver_path}({python_code_rules})\n"
-        return ast.parse(python_code)
+        return make_code_and_validate_nodes(left.id, node.body, self.nodes_path, self.solver_path, include_imports=True)
 
 class ExprVisitor(ast.NodeVisitor):
     def visit_BinOp(self, node: ast.BinOp):
@@ -50,7 +54,7 @@ class ExprVisitor(ast.NodeVisitor):
     def visit_Name(self, node: ast.Name):
         return utils.make_id(node.id)
 
-class FullVisitor(ast.NodeVisitor):
+class FullTransformerVisitor(ast.NodeVisitor):
     _fields = ["env"]
 
     def initialize(self):
