@@ -24,4 +24,4 @@ def tab_lines(lines: str):
     return x
 
 def str_dict(d):
-    return {str(k):str(v) for k, v in d.items()}
+    return "{" + ", ".join([str(k) + ": " + str(v) for k, v in d.items()]) + "}"

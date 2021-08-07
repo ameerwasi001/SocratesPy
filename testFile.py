@@ -9,12 +9,12 @@ with lovely_rules in SocraticSolver:
     # loves[A, B] = loves[B, A]
     narcissist[X] = loves[X, X]
 
-for sub in lovely_rules.lookup(Fact("loves", [Var("M"), Var("Z")])):
-    print(sub)
+for _, sub in lovely_rules.lookup(Fact("loves", [Var("M"), Var("Z")])):
+    print(utils.str_dict(Substitutions.optionally_resolve(_.env)), sub)
 
 print("# Narcissist")
 
-for sub in lovely_rules.lookup(Fact("narcissist", [Var("Y")])):
+for _, sub in lovely_rules.lookup(Fact("narcissist", [Var("Y")])):
     print(sub)
 
 print("---~~Mortality~~---")
@@ -26,8 +26,7 @@ with mortality_rules in SocraticSolver:
     mortal[X] = human[X]
     mortal[Z] = boy[Z]
 
-for sub in mortality_rules.lookup(Fact("mortal", [Var("O")])):
-    # rx = utils.str_dict(Substitutions.optionally_resolve(unifier.env))
+for _, sub in mortality_rules.lookup(Fact("mortal", [Var("O")])):
     print(sub)
 
 print("---~~Addition~~---")
@@ -35,8 +34,8 @@ with addition_rules in SocraticSolver:
     add[z, X, X]
     add[s[X], Y, s[Z]] = add[X, Y, Z]
 
-for sub in addition_rules.lookup(Fact("add", [Fact("s", [Fact("s", [Term("z")])]), Var("A"), Fact("s", [Fact("s", [Fact("s", [Fact("s", [Fact("s", [Term("z")])])])])])])):
-    print(sub)
+for unifier, sub in addition_rules.lookup(Fact("add", [Fact("s", [Fact("s", [Term("z")])]), Var("A"), Fact("s", [Fact("s", [Fact("s", [Fact("s", [Fact("s", [Term("z")])])])])])])):
+    print(utils.str_dict(Substitutions.optionally_resolve(unifier.env)), "results in", sub)
 
-for sub in addition_rules.lookup(Fact("add", [Var("A"), Fact("s", [Var("A")]), Fact("s", [Fact("s", [Fact("s", [Term("z")])])])])):
+for _, sub in addition_rules.lookup(Fact("add", [Var("A"), Fact("s", [Var("A")]), Fact("s", [Fact("s", [Fact("s", [Term("z")])])])])):
     print(sub)

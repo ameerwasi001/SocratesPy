@@ -2,7 +2,7 @@ import utils
 from visitors import RulesVisitor
 from functools import reduce
 from multipleDispatch import MultipleDispatch
-from nodes import Var, Term, Conjuction, Fact, Rule, Rules
+from nodes import Var, Term, Fact, Rule, Rules
 
 class DisjointOrderedSets:
     @staticmethod
@@ -58,17 +58,21 @@ class DisjointOrderedSets:
         rels.sets = {(tuple(x for x in xs), frozenset({k for k in rel})) for xs, rel in self.sets}
         return rels
 
-    def define_all(self, env):
+    def define_all(self, env, raises=True, preferred_hyphens=False):
         definitions = {}
         for _, rel in self.sets:
             defined = None
+            last = None
             for k in rel:
                 val = env.get_variable(k)
+                last = k
                 if val != None:
                     defined = val
-                    break
+                    if not (preferred_hyphens and ("-" in defined)):
+                        break
             if defined == None:
-                raise Exception(f"Could not resolve relation because none of {rel} has a known value")
+                if raises: raise Exception(f"Could not resolve relation because none of {rel} has a known value")
+                else: defined = last
             for k in rel:
                 definitions[k] = defined
         return definitions
@@ -88,15 +92,15 @@ class Substitutions:
 
     @staticmethod
     def resolve(this):
-        resolver = Resolver()
+        resolver = Resolver(this)
         resolutions = dict(this.relations.define_all(this), **this.substitutions)
-        return {k:resolver.visit(v, this) for k, v in resolutions.items()}
+        return {k:resolver.visit(v) for k, v in resolutions.items()}
 
     @staticmethod
     def optionally_resolve(this):
-        substituter = Substituter()
-        subs = dict(this.relations.define_all(this), **this.substitutions)
-        return {k:substituter.visit(v, this) for k, v in subs.items()}
+        substituter = Substituter(this)
+        subs = dict(this.relations.define_all(this, raises=False, preferred_hyphens=True), **this.substitutions)
+        return {k:substituter.visit(v) for k, v in subs.items()}
 
     def __init__(self):
         self.substitutions = {}
@@ -231,9 +235,6 @@ class UniqueVariableSubstitutor(RulesVisitor):
 
     def visit_Fact(self, fact: Fact):
         return Fact(fact.name, list(map(self.visit, fact.args)))
-
-    def visit_Conjuction(self, conjuction: Conjuction):
-        return Conjuction(self.visit(conjuction.right), self.visit(conjuction.left))
 
     def visit_Rule(self, rule: Rule):
         return Rule(self.visit(rule.fact), None if rule.condition == None else self.visit(rule.condition))

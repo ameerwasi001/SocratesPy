@@ -17,7 +17,7 @@ def make_code_and_validate_nodes(target_name, body, nodes_path, solver_path, inc
     python_code_rules = RulesToPython().visit(rules)
     python_code = ""
     if include_imports:
-        python_code += f"from {nodes_path} import Var, Term, Fact, Conjuction, Goals, Rule, Rules\n"
+        python_code += f"from {nodes_path} import Var, Term, Fact, Goals, Rule, Rules\n"
     python_code += f"\n{target_name} = {solver_path}({python_code_rules})\n"
     return ast.parse(python_code)
 

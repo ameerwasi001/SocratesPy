@@ -1,5 +1,6 @@
 import utils
 from visitors import RulesVisitor
+from sys import stderr
 from functools import reduce
 from multipleDispatch import MultipleDispatch
 from unificationVisitor import Unifier, UniqueVariableSubstitutor, Substitutions, Substituter
@@ -9,7 +10,11 @@ class KnowledgeBase:
     def __init__(self, knowledge):
         self.knowledge = knowledge    
 
-    def lookup(self, node): yield from Query(self).lookup(node)
+    def lookup(self, node): 
+        for res in Query(self).lookup(node):
+            unifier = Unifier()
+            if unifier.unify(node, res) == None: stderr.write("Internal Error: Incomplete substitution\n")
+            yield (unifier, Substituter(unifier.env).visit(node))
 
 class Query:
     def __init__(self, knowledge):
