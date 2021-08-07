@@ -10,7 +10,7 @@ with lovely_rules in SocraticSolver:
     narcissist[X] = loves[X, X]
 
 for _, sub in lovely_rules.lookup(Fact("loves", [Var("M"), Var("Z")])):
-    print(utils.str_dict(Substitutions.optionally_resolve(_.env)), sub)
+    print(sub)
 
 print("# Narcissist")
 

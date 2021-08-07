@@ -5,7 +5,7 @@ import utils
 from nodes import Var, Term, Fact, Goals, Rule, Rules
 lovely_rules = KnowledgeBase({'loves': [Rule(Fact('loves', [Term('hanna'), Term('miles')]), None), Rule(Fact('loves', [Term('tom'), Term('tom')]), None), Rule(Fact('loves', [Term('simon'), Term('sara')]), None)], 'narcissist': [Rule(Fact('narcissist', [Var('X')]), Fact('loves', [Var('X'), Var('X')]))]})
 for (_, sub) in lovely_rules.lookup(Fact('loves', [Var('M'), Var('Z')])):
-    print(utils.str_dict(Substitutions.optionally_resolve(_.env)), sub)
+    print(sub)
 print('# Narcissist')
 for (_, sub) in lovely_rules.lookup(Fact('narcissist', [Var('Y')])):
     print(sub)
