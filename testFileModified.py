@@ -11,7 +11,7 @@ for (_, sub) in lovely_rules.lookup(Fact('narcissist', [Var('Y')])):
     print(sub)
 print('---~~Mortality~~---')
 from nodes import Var, Term, Fact, Goals, Rule, Rules
-mortality_rules = KnowledgeBase({'human': [Rule(Fact('human', [Term('miles')]), None), Rule(Fact('human', [Term('socrates')]), None)], 'boy': [Rule(Fact('boy', [Term('samael')]), None)], 'mortal': [Rule(Fact('mortal', [Var('X')]), Fact('human', [Var('X')])), Rule(Fact('mortal', [Var('Z')]), Fact('boy', [Var('Z')]))]})
+mortality_rules = KnowledgeBase({'human': [Rule(Fact('human', [Term('miles')]), None), Rule(Fact('human', [Term('samael')]), None), Rule(Fact('human', [Term('socrates')]), None)], 'male': [Rule(Fact('male', [Term('samael')]), None)], 'mortal': [Rule(Fact('mortal', [Var('X')]), Fact('human', [Var('X')])), Rule(Fact('mortal', [Var('Z')]), Fact('boy', [Var('Z')]))], 'boy': [Rule(Fact('boy', [Var('A')]), Goals([Fact('male', [Var('A')]), Fact('human', [Var('A')])]))]})
 for (_, sub) in mortality_rules.lookup(Fact('mortal', [Var('O')])):
     print(sub)
 print('---~~Addition~~---')

@@ -2,7 +2,7 @@ import utils
 from visitors import RulesVisitor
 from functools import reduce
 from multipleDispatch import MultipleDispatch
-from nodes import Var, Term, Fact, Rule, Rules
+from nodes import Var, Term, Fact, Goals, Rule, Rules
 
 class DisjointOrderedSets:
     @staticmethod
@@ -197,6 +197,13 @@ class Unifier:
                 if not self.unify(a, b): return False
             return True
 
+        @self.unify.addCase(Goals, Goals)
+        def _unify(g1, g2):
+            if len(g1) != len(g2): return False
+            for a, b in zip(g1.goals, g2.goals):
+                if not self.unify(a, b): return False
+            return True
+
         @self.unify.defaultCase
         def _unify(t1, t2):
             if isinstance(t1, Var): return self.env.add_variable(self, t1.name, t2)
@@ -236,6 +243,9 @@ class UniqueVariableSubstitutor(RulesVisitor):
     def visit_Fact(self, fact: Fact):
         return Fact(fact.name, list(map(self.visit, fact.args)))
 
+    def visit_Goals(self, goals: Goals):
+        return Goals(list(map(self.visit, goals.goals)))
+
     def visit_Rule(self, rule: Rule):
         return Rule(self.visit(rule.fact), None if rule.condition == None else self.visit(rule.condition))
 
@@ -258,6 +268,9 @@ class Resolver(RulesVisitor):
 
     def visit_Fact(self, fact: Fact):
         return Fact(fact.name, list(map(self.visit, fact.args)))
+
+    def visit_Goals(self, goals: Goals):
+        return Goals(list(map(self.visit, goals.goals)))
 
     def visit_Rule(self, rule: Rule):
         return Rule(self.visit(rule.fact), None if rule.condition == None else self.visit(rule.condition))

@@ -21,10 +21,12 @@ print("---~~Mortality~~---")
 
 with mortality_rules in SocraticSolver:
     human[miles]
+    human[samael]
+    male[samael]
     human[socrates]
-    boy[samael]
     mortal[X] = human[X]
     mortal[Z] = boy[Z]
+    boy[A] = male[A] & human[A]
 
 for _, sub in mortality_rules.lookup(Fact("mortal", [Var("O")])):
     print(sub)

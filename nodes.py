@@ -34,7 +34,10 @@ class Conjuction:
 class Goals:
     def __init__(self, _list):
         self.goals = _list
-    
+
+    def __len__(self):
+        return len(self.goals)
+
     def __str__(self):
         return f"{' & '.join(map(str, self.goals))}"
 

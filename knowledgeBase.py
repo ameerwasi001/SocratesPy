@@ -4,7 +4,7 @@ from sys import stderr
 from functools import reduce
 from multipleDispatch import MultipleDispatch
 from unificationVisitor import Unifier, UniqueVariableSubstitutor, Substitutions, Substituter
-from nodes import Var, Term, Conjuction, Fact, Rule, Rules
+from nodes import Var, Term, Conjuction, Fact, Goals, Rule, Rules
 
 class KnowledgeBase:
     def __init__(self, knowledge):
@@ -24,6 +24,21 @@ class Query:
     def lookup(self, node):
         self.unique_substitutor.clear_vars()
         return getattr(self, f"lookup_{type(node).__name__}")(node)
+
+    def lookup_Goals(self, goals: Goals):
+        def solutions(index: int, unifier: Unifier):
+            if index in range(len(goals.goals)):
+                goal = goals.goals[index]
+                iterator = self.lookup(Substituter(unifier.env).visit(goal))
+                for item in iterator:
+                    new_unifier = Unifier()
+                    if not new_unifier.unify(goal, item): continue
+                    unified = Unifier.merge(Unifier.inheriting(unifier), new_unifier)
+                    if unified != None:
+                        yield from solutions(index+1, unified)
+            else:
+                yield Substituter(unifier.env).visit(goals)
+        yield from solutions(0, Unifier())
 
     def lookup_Fact(self, fact: Fact):
         possibilities = self.knowledge_base.knowledge.get(fact.name)
