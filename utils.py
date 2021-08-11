@@ -23,5 +23,12 @@ def tab_lines(lines: str):
         x += "\n " + line
     return x
 
+def remove_arity_from_name(name):
+    new_name = ""
+    for c in name:
+        if c == "/": break
+        new_name += c
+    return new_name
+
 def str_dict(d):
     return "{" + ", ".join([str(k) + ": " + str(v) for k, v in d.items()]) + "}"

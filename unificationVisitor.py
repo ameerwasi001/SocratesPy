@@ -253,6 +253,22 @@ class UniqueVariableSubstitutor(RulesVisitor):
         new_node = self.visit(given)
         return new_node
 
+class RemoveNumberedExprVisitor(RulesVisitor):
+    def visit_Rule(self, rule: Rule):
+        return Rule(self.visit(rule.fact), None if rule.condition == None else self.visit(rule.condition))
+
+    def visit_Fact(self, fact: Fact):
+        if len(fact) == 0:
+            return Term(fact.name)
+        ls = list(map(self.visit, fact.args))
+        return Fact(utils.remove_arity_from_name(fact.name), ls)
+
+    def visit_Conjuction(self, goals: Goals):
+        return Goals(list(map(self.visit, goals.goals)))
+
+    def visit_Var(self, var: Var): return var
+    def visit_Term(self, term: Term): return term
+
 class Resolver(RulesVisitor):
     def __init__(self, env, _resolved_env=False):
         self.env = env if _resolved_env else substitute_environment(env)

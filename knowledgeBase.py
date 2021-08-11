@@ -3,7 +3,7 @@ from visitors import RulesVisitor
 from sys import stderr
 from functools import reduce
 from multipleDispatch import MultipleDispatch
-from unificationVisitor import Unifier, UniqueVariableSubstitutor, Substitutions, Substituter
+from unificationVisitor import Unifier, UniqueVariableSubstitutor, Substitutions, Substituter, RemoveNumberedExprVisitor
 from nodes import Var, Term, Conjuction, Fact, Goals, Rule, Rules
 
 class KnowledgeBase:
@@ -14,7 +14,10 @@ class KnowledgeBase:
         for res in Query(self).lookup(node):
             unifier = Unifier()
             if unifier.unify(node, res) == None: stderr.write("Internal Error: Incomplete substitution\n")
-            yield (unifier, Substituter(unifier.env).visit(node))
+            returning_subs = {k:RemoveNumberedExprVisitor().visit(v) for k,v in unifier.env.substitutions.items()}
+            returning_unifier = unifier.clone()
+            returning_unifier.env.substitutions = returning_subs
+            yield (returning_unifier, RemoveNumberedExprVisitor().visit(Substituter(returning_unifier.env).visit(node)))
 
 class Query:
     def __init__(self, knowledge):

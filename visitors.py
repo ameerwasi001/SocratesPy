@@ -3,13 +3,15 @@ import utils
 from nodes import Var, Term, Fact, Conjuction, Goals, Rule, Rules
 from functools import *
 
+def make_expr(env): return TermCreator().visit(env)
+
 def make_code_and_validate_nodes(target_name, body, nodes_path, solver_path, include_imports=False):
     validator = SyntaxValidator()
     list(map(validator.visit, body))
     visitor = FullTransformerVisitor()
     visitor.initialize()
     list(map(visitor.visit, body))
-    rules = TermCreator().visit(visitor.env)
+    rules = make_expr(visitor.env)
     goalCreator = GoalCreator()
     rules = GoalCreator().visit(rules)
     arity_checker = CorrectArgumentRules(rules)
@@ -63,14 +65,15 @@ class FullTransformerVisitor(ast.NodeVisitor):
         return self
 
     def visit_Subscript(self, node: ast.Subscript):
-        self.env.add(node.value.id, Rule(self.expr_visitor.visit(node)))
+        visited = self.expr_visitor.visit(node)
+        self.env.add(f"{node.value.id}/{str(len(visited))}", Rule(visited))
 
     def visit_Assign(self, node: ast.Assign):
         target = node.targets[0]
         fact = self.expr_visitor.visit(target)
         query = self.expr_visitor.visit(node.value)
         rule = Rule(fact, query)
-        self.env.add(fact.name, rule)
+        self.env.add(f"{fact.name}/{str(len(fact))}", rule)
 
     def __str__(self):
         return str(self.env)
@@ -135,12 +138,14 @@ class TermCreator(RulesVisitor):
     def visit_Fact(self, fact: Fact):
         if len(fact) == 0:
             return Term(fact.name)
-        return Fact(fact.name, list(map(self.visit, fact.args)))
+        ls = list(map(self.visit, fact.args))
+        return Fact(f"{fact.name}/{str(len(ls))}", ls)
 
     def visit_Conjuction(self, conjuction: Conjuction):
         return Conjuction(self.visit(conjuction.left), self.visit(conjuction.right))
 
     def visit_Var(self, var: Var): return var
+    def visit_Term(self, term: Term): return term
 
 class GoalCreator(RulesVisitor):
     def visit_Rules(self, rules: Rules):
