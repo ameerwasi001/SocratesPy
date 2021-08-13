@@ -27,6 +27,7 @@ class NodeFinderVistor(ast.NodeTransformer):
     def initialize(self, nodes_path, solver):
         self.nodes_path = nodes_path
         self.solver_path = solver
+        self.imported = False
         return self
 
     def visit_With(self, node: ast.With):
@@ -39,7 +40,9 @@ class NodeFinderVistor(ast.NodeTransformer):
         left = comp_expr.left
         if not (isinstance(left, ast.Name) and right.id == "SocraticSolver" and isinstance(right, ast.Name)):
             return node
-        return make_code_and_validate_nodes(left.id, node.body, self.nodes_path, self.solver_path, include_imports=True)
+        imported = self.imported
+        self.imported = True
+        return make_code_and_validate_nodes(left.id, node.body, self.nodes_path, self.solver_path, include_imports=not imported)
 
 class ExprVisitor(ast.NodeVisitor):
     def visit_BinOp(self, node: ast.BinOp):

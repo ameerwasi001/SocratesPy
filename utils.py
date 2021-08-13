@@ -32,3 +32,6 @@ def remove_arity_from_name(name):
 
 def str_dict(d):
     return "{" + ", ".join([str(k) + ": " + str(v) for k, v in d.items()]) + "}"
+
+def dict_as_eqs(d):
+    return ", ".join([str(k) + " = " + str(v) for k, v in d.items()])

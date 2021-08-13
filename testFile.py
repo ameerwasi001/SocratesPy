@@ -62,4 +62,4 @@ for _, sub in lst_rules.lookup(make_expr(Fact("lst_member", [Term("x"), lst1])))
 
 print("# Concatenation")
 for unifier, _ in lst_rules.lookup(make_expr(Fact("lst_concat", [lst1, lst2, Var("Res")]))):
-    print(utils.str_dict(Substitutions.optionally_resolve(unifier.env)))
+    print(utils.dict_as_eqs(Substitutions.optionally_resolve(unifier.env)))
