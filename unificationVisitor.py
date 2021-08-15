@@ -5,14 +5,6 @@ from multipleDispatch import MultipleDispatch
 from nodes import Var, Term, Fact, Goals, Rule, Rules
 
 class DisjointOrderedSets:
-    @staticmethod
-    def normalizeUniques(this, uniques):
-        disjoint_sets = DisjointOrderedSets()
-        rels = {(tuple(uniques.get(x, x) for x in rel_order), frozenset({uniques.get(k, k) for k in rel})) for rel_order, rel in this.sets}
-        for rel_order, rel in rels:
-            disjoint_sets.add_relation(rel_order, rel)
-        return disjoint_sets
-
     def __init__(self):
         self.sets = set()
 
@@ -82,14 +74,6 @@ class DisjointOrderedSets:
         return "Relations: " + ", ".join(ls)
 
 class Substitutions:
-    @staticmethod
-    def normalizeUniques(this, uniques):
-        subs = Substitutions()
-        uniques = {v:k for k, v in uniques.items()}
-        subs.substitutions = {uniques.get(k, k):v for k, v in this.substitutions.items()}
-        subs.relations = DisjointOrderedSets.normalizeUniques(this.relations, uniques)
-        return subs
-
     @staticmethod
     def resolve(this):
         resolver = Resolver(this)

@@ -58,7 +58,7 @@ lst1 = Fact("cons", [Term("x"), Fact("cons", [Term("y"), Term("nil")])])
 lst2 = Fact("cons", [Term("a"), Fact("cons", [Term("b"), Term("nil")])])
 
 for _, sub in lst_rules.lookup(make_expr(Fact("lst_member", [Term("x"), lst1]))):
-    print(sub) 
+    print(sub)
 
 print("# Concatenation")
 for unifier, _ in lst_rules.lookup(make_expr(Fact("lst_concat", [lst1, lst2, Var("Res")]))):
