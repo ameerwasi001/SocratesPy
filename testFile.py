@@ -18,9 +18,9 @@ print("# Narcissist")
 for _, sub in lovely_rules.lookup(make_expr(Fact("narcissist", [Var("Y")]))):
     print(sub)
 
-print("---~~Mortality~~---")
+print("---~~Living~~---")
 
-with mortality_rules in SocraticSolver:
+with life_rules in SocraticSolver:
     human[miles]
     human[samael]
     male[samael]
@@ -29,7 +29,26 @@ with mortality_rules in SocraticSolver:
     mortal[Z] = boy[Z]
     boy[A] = male[A] & human[A]
 
-for _, sub in mortality_rules.lookup(make_expr(Fact("mortal", [Var("O")]))):
+    father[miles, samael]
+    father[sara, samael]
+    father[amanda, samael]
+    father[steven, jordon]
+    father[laura, jordon]
+    father[cassandra, jim]
+
+    sibiling[A, B] = father[A, X] & father[B, X]
+    child[X, A] = father[A, X]
+
+print("# Mortal")
+for _, sub in life_rules.lookup(make_expr(Fact("mortal", [Var("O")]))):
+    print(sub)
+
+print("# Sibilings")
+for _, sub in life_rules.lookup(make_expr(Fact("sibiling", [Term("sara"), Var("M")]))):
+    print(sub)
+
+print("# Children")
+for _, sub in life_rules.lookup(make_expr(Fact("child", [Term("jordon"), Var("C")]))):
     print(sub)
 
 print("---~~Addition~~---")

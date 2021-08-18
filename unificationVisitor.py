@@ -77,7 +77,7 @@ class Substitutions:
     @staticmethod
     def resolve(this):
         resolver = Resolver(this)
-        resolutions = dict(this.relations.define_all(this), **this.substitutions)
+        resolutions = dict(this.relations.define_all(this, preferred_hyphens=True), **this.substitutions)
         return {k:resolver.visit(v) for k, v in resolutions.items()}
 
     @staticmethod

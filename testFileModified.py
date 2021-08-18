@@ -10,9 +10,16 @@ for (_, sub) in lovely_rules.lookup(make_expr(Fact('loves', [Var('M'), Var('Z')]
 print('# Narcissist')
 for (_, sub) in lovely_rules.lookup(make_expr(Fact('narcissist', [Var('Y')]))):
     print(sub)
-print('---~~Mortality~~---')
-mortality_rules = KnowledgeBase({'human/1': [Rule(Fact('human/1', [Term('miles')]), None), Rule(Fact('human/1', [Term('samael')]), None), Rule(Fact('human/1', [Term('socrates')]), None)], 'male/1': [Rule(Fact('male/1', [Term('samael')]), None)], 'mortal/1': [Rule(Fact('mortal/1', [Var('X')]), Fact('human/1', [Var('X')])), Rule(Fact('mortal/1', [Var('Z')]), Fact('boy/1', [Var('Z')]))], 'boy/1': [Rule(Fact('boy/1', [Var('A')]), Goals([Fact('male/1', [Var('A')]), Fact('human/1', [Var('A')])]))]})
-for (_, sub) in mortality_rules.lookup(make_expr(Fact('mortal', [Var('O')]))):
+print('---~~Living~~---')
+life_rules = KnowledgeBase({'human/1': [Rule(Fact('human/1', [Term('miles')]), None), Rule(Fact('human/1', [Term('samael')]), None), Rule(Fact('human/1', [Term('socrates')]), None)], 'male/1': [Rule(Fact('male/1', [Term('samael')]), None)], 'mortal/1': [Rule(Fact('mortal/1', [Var('X')]), Fact('human/1', [Var('X')])), Rule(Fact('mortal/1', [Var('Z')]), Fact('boy/1', [Var('Z')]))], 'boy/1': [Rule(Fact('boy/1', [Var('A')]), Goals([Fact('male/1', [Var('A')]), Fact('human/1', [Var('A')])]))], 'father/2': [Rule(Fact('father/2', [Term('miles'), Term('samael')]), None), Rule(Fact('father/2', [Term('sara'), Term('samael')]), None), Rule(Fact('father/2', [Term('amanda'), Term('samael')]), None), Rule(Fact('father/2', [Term('steven'), Term('jordon')]), None), Rule(Fact('father/2', [Term('laura'), Term('jordon')]), None), Rule(Fact('father/2', [Term('cassandra'), Term('jim')]), None)], 'sibiling/2': [Rule(Fact('sibiling/2', [Var('A'), Var('B')]), Goals([Fact('father/2', [Var('A'), Var('X')]), Fact('father/2', [Var('B'), Var('X')])]))], 'child/2': [Rule(Fact('child/2', [Var('X'), Var('A')]), Fact('father/2', [Var('A'), Var('X')]))]})
+print('# Mortal')
+for (_, sub) in life_rules.lookup(make_expr(Fact('mortal', [Var('O')]))):
+    print(sub)
+print('# Sibilings')
+for (_, sub) in life_rules.lookup(make_expr(Fact('sibiling', [Term('sara'), Var('M')]))):
+    print(sub)
+print('# Children')
+for (_, sub) in life_rules.lookup(make_expr(Fact('child', [Term('jordon'), Var('C')]))):
     print(sub)
 print('---~~Addition~~---')
 addition_rules = KnowledgeBase({'add/3': [Rule(Fact('add/3', [Term('z'), Var('X'), Var('X')]), None), Rule(Fact('add/3', [Fact('s/1', [Var('X')]), Var('Y'), Fact('s/1', [Var('Z')])]), Fact('add/3', [Var('X'), Var('Y'), Var('Z')]))]})
