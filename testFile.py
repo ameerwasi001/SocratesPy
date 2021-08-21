@@ -10,12 +10,12 @@ with lovely_rules in SocraticSolver:
     # loves[A, B] = loves[B, A]
     narcissist[X] = loves[X, X]
 
-for _, sub in lovely_rules.lookup(make_expr(Fact("loves", [Var("M"), Var("Z")]))):
+for _, sub in lovely_rules.lookup(SocraticQuery(loves[M, Z])):
     print(sub)
 
 print("# Narcissist")
 
-for _, sub in lovely_rules.lookup(make_expr(Fact("narcissist", [Var("Y")]))):
+for _, sub in lovely_rules.lookup(SocraticQuery(narcissist[Y])):
     print(sub)
 
 print("---~~Living~~---")
@@ -24,31 +24,35 @@ with life_rules in SocraticSolver:
     human[miles]
     human[samael]
     male[samael]
+    male[jordon]
+    male[jim]
     human[socrates]
     mortal[X] = human[X]
     mortal[Z] = boy[Z]
     boy[A] = male[A] & human[A]
 
-    father[miles, samael]
-    father[sara, samael]
-    father[amanda, samael]
-    father[steven, jordon]
-    father[laura, jordon]
-    father[cassandra, jim]
+    parent[miles, samael]
+    parent[sara, samael]
+    parent[amanda, samael]
+    parent[steven, jordon]
+    parent[laura, jordon]
+    parent[cassandra, jim]
+
+    father[A, X] = parent[A, X] & male[X]
 
     sibiling[A, B] = father[A, X] & father[B, X]
     child[X, A] = father[A, X]
 
 print("# Mortal")
-for _, sub in life_rules.lookup(make_expr(Fact("mortal", [Var("O")]))):
+for _, sub in life_rules.lookup(SocraticQuery(mortal[O])):
     print(sub)
 
 print("# Sibilings")
-for _, sub in life_rules.lookup(make_expr(Fact("sibiling", [Term("sara"), Var("M")]))):
+for _, sub in life_rules.lookup(SocraticQuery(sibiling[sara, M])):
     print(sub)
 
 print("# Children")
-for _, sub in life_rules.lookup(make_expr(Fact("child", [Term("jordon"), Var("C")]))):
+for _, sub in life_rules.lookup(SocraticQuery(child[jordon, C])):
     print(sub)
 
 print("---~~Addition~~---")
@@ -56,10 +60,10 @@ with addition_rules in SocraticSolver:
     add[z, X, X]
     add[s[X], Y, s[Z]] = add[X, Y, Z]
 
-for unifier, sub in addition_rules.lookup(make_expr(Fact("add", [Fact("s", [Fact("s", [Term("z")])]), Var("A"), Fact("s", [Fact("s", [Fact("s", [Fact("s", [Fact("s", [Term("z")])])])])])]))):
+for unifier, sub in addition_rules.lookup(SocraticQuery(add[s[s[z]], A, s[s[s[s[s[z]]]]]])):
     print(utils.str_dict(Substitutions.optionally_resolve(unifier.env)), "results in", sub)
 
-for _, sub in addition_rules.lookup(make_expr(Fact("add", [Var("A"), Fact("s/1", [Var("A")]), Fact("s/1", [Fact("s/1", [Fact("s/1", [Term("z")])])])]))):
+for _, sub in addition_rules.lookup(SocraticQuery(add[A, s[A], s[s[s[z]]]])):
     print(sub)
 
 print("---~~List~~---")
@@ -80,5 +84,5 @@ for _, sub in lst_rules.lookup(make_expr(Fact("lst_member", [Term("x"), lst1])))
     print(sub)
 
 print("# Concatenation")
-for unifier, _ in lst_rules.lookup(make_expr(Fact("lst_concat", [lst1, lst2, Var("Res")]))):
+for unifier, _ in lst_rules.lookup(SocraticQuery(lst_concat[cons[x, cons[y, nil]], cons[a, cons[b, nil]], Res])):
     print(utils.dict_as_eqs(Substitutions.optionally_resolve(unifier.env)))

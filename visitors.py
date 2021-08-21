@@ -30,16 +30,27 @@ class NodeFinderVistor(ast.NodeTransformer):
         self.imported = False
         return self
 
+    def visit_Call(self, node: ast.Call):
+        if isinstance(node.func, ast.Name) and node.func.id == "SocraticQuery" and len(node.args) == 1:
+            query = node.args[0]
+            validator = SyntaxValidator()
+            validator.visit(query)
+            expr = ExprVisitor().visit(query)
+            goal_expr = GoalCreator().visit(expr)
+            numbered_term_expr = TermCreator().visit(expr)
+            return ast.parse(RulesToPython().visit(numbered_term_expr))
+        return self.generic_visit(node)
+
     def visit_With(self, node: ast.With):
         if not (len(node.items) == 1 and isinstance(node.items[0].context_expr, ast.Compare)):
-            return node
+            return self.generic_visit(node)
         comp_expr = node.items[0].context_expr
         if len(comp_expr.comparators) != 1 or len(comp_expr.ops) != 1 or (not isinstance(comp_expr.ops[0], ast.In)):
-            return node
+            return self.generic_visit(node)
         right = comp_expr.comparators[0]
         left = comp_expr.left
         if not (isinstance(left, ast.Name) and right.id == "SocraticSolver" and isinstance(right, ast.Name)):
-            return node
+            return self.generic_visit(node)
         imported = self.imported
         self.imported = True
         return make_code_and_validate_nodes(left.id, node.body, self.nodes_path, self.solver_path, include_imports=not imported)
