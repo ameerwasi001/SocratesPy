@@ -11,8 +11,7 @@ file_to_write = argv[2]
 
 with open(file_to_open, "r") as f:
     content = f.read()
-    my_tree = ast.parse(content)
-    new_tree = visitors.NodeFinderVistor().initialize("nodes", "KnowledgeBase").visit(my_tree)
+    new_tree = visitors.create_knowledgebase("nodes", "KnowledgeBase", content)
 
 with open(file_to_write, "w") as f:
     content = astunparse.unparse(new_tree)

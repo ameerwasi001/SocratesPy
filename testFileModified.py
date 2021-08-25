@@ -1,9 +1,9 @@
 
+from nodes import Var, Term, Fact, Goals, Rule, Rules
 from knowledgeBase import KnowledgeBase
 from visitors import make_expr
 from unificationVisitor import Substitutions
 import utils
-from nodes import Var, Term, Fact, Goals, Rule, Rules
 lovely_rules = KnowledgeBase({'loves/2': [Rule(Fact('loves/2', [Term('hanna'), Term('miles')]), None), Rule(Fact('loves/2', [Term('tom'), Term('tom')]), None), Rule(Fact('loves/2', [Term('simon'), Term('sara')]), None)], 'narcissist/1': [Rule(Fact('narcissist/1', [Var('X')]), Fact('loves/2', [Var('X'), Var('X')]))]})
 for (_, sub) in lovely_rules.lookup(
 Fact('loves/2', [Var('M'), Var('Z')])):

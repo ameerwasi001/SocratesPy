@@ -5,7 +5,7 @@ from functools import *
 
 def make_expr(env): return TermCreator().visit(env)
 
-def make_code_and_validate_nodes(target_name, body, nodes_path, solver_path, include_imports=False):
+def make_code_and_validate_nodes(target_name, body, nodes_path, solver_path):
     validator = SyntaxValidator()
     list(map(validator.visit, body))
     visitor = FullTransformerVisitor()
@@ -17,11 +17,19 @@ def make_code_and_validate_nodes(target_name, body, nodes_path, solver_path, inc
     arity_checker = CorrectArgumentRules(rules)
     arity_checker.visit_all(rules)
     python_code_rules = RulesToPython().visit(rules)
-    python_code = ""
-    if include_imports:
-        python_code += f"from {nodes_path} import Var, Term, Fact, Goals, Rule, Rules\n"
-    python_code += f"\n{target_name} = {solver_path}({python_code_rules})\n"
+    python_code = f"\n{target_name} = {solver_path}({python_code_rules})\n"
     return ast.parse(python_code)
+
+def create_knowledgebase(nodes_path, name, code):
+    python_imports = f"from {nodes_path} import Var, Term, Fact, Goals, Rule, Rules\n"
+    my_tree = ast.parse(code)
+    node_finder = NodeFinderVistor()
+    new_tree = node_finder.initialize(nodes_path, name).visit(my_tree)
+    python_code = NodeFinderVistor().visit(my_tree)
+    if node_finder.imported:
+        import_tree = ast.parse(python_imports)
+        python_code.body.insert(0, import_tree)
+    return python_code
 
 class NodeFinderVistor(ast.NodeTransformer):
     def initialize(self, nodes_path, solver):
@@ -53,7 +61,7 @@ class NodeFinderVistor(ast.NodeTransformer):
             return self.generic_visit(node)
         imported = self.imported
         self.imported = True
-        return make_code_and_validate_nodes(left.id, node.body, self.nodes_path, self.solver_path, include_imports=not imported)
+        return make_code_and_validate_nodes(left.id, node.body, self.nodes_path, self.solver_path)
 
 class ExprVisitor(ast.NodeVisitor):
     def visit_BinOp(self, node: ast.BinOp):

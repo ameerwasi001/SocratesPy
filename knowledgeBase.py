@@ -30,10 +30,9 @@ class Query:
 
     def lookup_Goals(self, goals: Goals):
         def solutions(index: int, unifier: Unifier):
-            if index in range(len(goals.goals)):
+            if index < len(goals.goals):
                 goal = goals.goals[index]
-                iterator = self.lookup(Substituter(unifier.env).visit(goal))
-                for item in iterator:
+                for item in self.lookup(Substituter(unifier.env).visit(goal)):
                     new_unifier = Unifier()
                     if not new_unifier.unify(goal, item): continue
                     unified = Unifier.merge(Unifier.inheriting(unifier), new_unifier)
