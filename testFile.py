@@ -57,13 +57,13 @@ for _, sub in life_rules.lookup(SocraticQuery(child[jordon, C])):
 
 print("---~~Addition~~---")
 with addition_rules in SocraticSolver:
-    add[z, X, X]
+    add[0, X, X]
     add[s[X], Y, s[Z]] = add[X, Y, Z]
 
-for unifier, sub in addition_rules.lookup(SocraticQuery(add[s[s[z]], A, s[s[s[s[s[z]]]]]])):
+for unifier, sub in addition_rules.lookup(SocraticQuery(add[s[s[0]], A, s[s[s[s[s[0]]]]]])):
     print(utils.str_dict(Substitutions.optionally_resolve(unifier.env)), "results in", sub)
 
-for _, sub in addition_rules.lookup(SocraticQuery(add[A, s[A], s[s[s[z]]]])):
+for _, sub in addition_rules.lookup(SocraticQuery(add[A, s[A], s[s[s[0]]]])):
     print(sub)
 
 print("---~~List~~---")

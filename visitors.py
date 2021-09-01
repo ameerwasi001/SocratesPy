@@ -71,9 +71,14 @@ class ExprVisitor(ast.NodeVisitor):
 
     def visit_Subscript(self, node: ast.Subscript):
         if isinstance(node.slice.value, ast.Subscript): args = [self.visit(node.slice.value)]
+        elif isinstance(node.slice.value, ast.Constant): args = [self.visit(node.slice.value)]
         else: args = list(map(self.visit, [node.slice.value] if isinstance(node.slice.value, ast.Name) else node.slice.value.elts))
         name = node.value.id
         return Fact(name, args)
+
+    def visit_Constant(self, node: ast.Constant):
+        if str(node.value).isdigit(): return Term(int(node.value))
+        raise Exception(f"Unexpected type constant {str(node.value)}, only expected identifier or an integer")
 
     def visit_Name(self, node: ast.Name):
         return utils.make_id(node.id)
@@ -136,15 +141,21 @@ class SyntaxValidator(ast.NodeVisitor):
     def visit_Name(self, node):
         if not node.id[0].islower():
             raise Exception("Expected an identfier starting with a lowercase letter")
+    
+    def visit_Constant(self, node):
+        if str(node.value).isdigit(): return Term(int(node.value))
+        raise Exception(f"Unexpected type constant {str(node.value)}, only expected identifier or an integer")
 
     def visit_Subscript(self, node: ast.Subscript):
         if not (isinstance(node.value, ast.Name) and len(node.value.id) > 0 and node.value.id[0].islower()):
             raise Exception("Expected an identfier starting with a lowercase letter")
         if isinstance(node.slice.value, ast.Subscript):
             self.visit_Subscript(node.slice.value)
+        elif isinstance(node.slice.value, ast.Constant):
+            self.visit_Constant(node.slice.value)
         elif not isinstance(node.slice.value, ast.Name):
             if not (isinstance(node.slice.value, ast.Tuple) and all(map(lambda a: self.visit, node.slice.value.elts))):
-                raise Exception("Only names as subscripts are allowed")
+                raise Exception("Only names or numbers as subscripts are allowed")
 
 class RulesVisitor:
     def visit(self, node, *args, **kwargs):
