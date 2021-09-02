@@ -4,7 +4,7 @@ from sys import stderr
 from functools import reduce
 from multipleDispatch import MultipleDispatch
 from unificationVisitor import Unifier, UniqueVariableSubstitutor, Substitutions, Substituter, RemoveNumberedExprVisitor
-from nodes import Var, Term, Conjuction, Fact, Goals, Rule, Rules
+from nodes import Var, Term, Conjuction, BinOp, Fact, Goals, Rule, Rules
 
 class KnowledgeBase:
     def __init__(self, knowledge):
@@ -41,6 +41,9 @@ class Query:
             else:
                 yield Substituter(unifier.env).visit(goals)
         yield from solutions(0, Unifier())
+
+    def lookup_BinOp(self, binOp: BinOp):
+        raise NotImplementedError("Constraints are yet to be implemented")
 
     def lookup_Fact(self, fact: Fact):
         possibilities = self.knowledge_base.knowledge.get(fact.name)

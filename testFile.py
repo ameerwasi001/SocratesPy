@@ -86,3 +86,11 @@ for _, sub in lst_rules.lookup(make_expr(Fact("lst_member", [Term("x"), lst1])))
 print("# Concatenation")
 for unifier, _ in lst_rules.lookup(SocraticQuery(lst_concat[cons[x, cons[y, nil]], cons[a, cons[b, nil]], Res])):
     print(utils.dict_as_eqs(Substitutions.optionally_resolve(unifier.env)))
+
+# print("---~~Numbers~~---")
+# with lst_rules in SocraticSolver:
+#     syntax_trial[X, Y] = (Y == X+1) & inc[Y, Y] & (Y == X+2)
+#     inc[X, Y] = Y == X+1
+
+# for unifier, _ in lst_rules.lookup(SocraticQuery(inc[7, X])):
+#     print(utils.dict_as_eqs(Substitutions.optionally_resolve(unifier.env)))

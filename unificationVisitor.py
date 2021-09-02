@@ -2,7 +2,7 @@ import utils
 from visitors import RulesVisitor
 from functools import reduce
 from multipleDispatch import MultipleDispatch
-from nodes import Var, Term, Fact, Goals, Rule, Rules
+from nodes import Var, Term, BinOp, Fact, Goals, Rule, Rules
 
 class DisjointOrderedSets:
     def __init__(self):
@@ -227,6 +227,9 @@ class UniqueVariableSubstitutor(RulesVisitor):
     def visit_Fact(self, fact: Fact):
         return Fact(fact.name, list(map(self.visit, fact.args)))
 
+    def visit_BinOp(self, bin_op: BinOp):
+        return BinOp(self.visit(bin_op.left), bin_op.op, self.visit(bin_op.right))
+
     def visit_Goals(self, goals: Goals):
         return Goals(list(map(self.visit, goals.goals)))
 
@@ -265,6 +268,9 @@ class Resolver(RulesVisitor):
         if val == None:
             raise Exception(f"Could not get variable {var}, since it has no definitions and is only related to {self.env.relations.sets}")
         return val
+
+    def visit_BinOp(self, bin_op: BinOp):
+        return BinOp(self.visit(bin_op.left), bin_op.op, self.visit(bin_op.right))
 
     def visit_Fact(self, fact: Fact):
         return Fact(fact.name, list(map(self.visit, fact.args)))

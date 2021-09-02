@@ -1,5 +1,5 @@
 
-from nodes import Var, Term, Fact, Goals, Rule, Rules
+from nodes import Var, Term, Fact, BinOp, Goals, Rule, Rules
 from knowledgeBase import KnowledgeBase
 from visitors import make_expr
 from unificationVisitor import Substitutions

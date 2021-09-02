@@ -20,7 +20,7 @@ class Term:
         self.name = value
     
     def __str__(self):
-        return self.name
+        return str(self.name)
 
     def __eq__(self, other):
         if not isinstance(other, Term): return False
@@ -116,7 +116,7 @@ class BinOp:
         self.right = b
 
     def __str__(self):
-        return f"{str(self.left)} {self.op} {str(self.right)}"
+        return f"({str(self.left)} {self.op} {str(self.right)})"
 
     def __eq__(self, other):
         if not isinstance(other, BinOp): return False

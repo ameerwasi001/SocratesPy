@@ -1,6 +1,6 @@
 import ast
 import utils
-from nodes import Var, Term, Fact, Conjuction, Goals, Rule, Rules
+from nodes import Var, Term, Fact, BinOp, Conjuction, Goals, Rule, Rules
 from functools import *
 
 def make_expr(env): return TermCreator().visit(env)
@@ -21,7 +21,7 @@ def make_code_and_validate_nodes(target_name, body, nodes_path, solver_path):
     return ast.parse(python_code)
 
 def create_knowledgebase(nodes_path, name, code):
-    python_imports = f"from {nodes_path} import Var, Term, Fact, Goals, Rule, Rules\n"
+    python_imports = f"from {nodes_path} import Var, Term, Fact, BinOp, Goals, Rule, Rules\n"
     my_tree = ast.parse(code)
     node_finder = NodeFinderVistor()
     new_tree = node_finder.initialize(nodes_path, name).visit(my_tree)
@@ -65,9 +65,23 @@ class NodeFinderVistor(ast.NodeTransformer):
 
 class ExprVisitor(ast.NodeVisitor):
     def visit_BinOp(self, node: ast.BinOp):
-        right = self.visit(node.right)
-        left = self.visit(node.left)
-        return Conjuction(left, right)
+        if isinstance(node.op, ast.BitAnd):
+            right = self.visit(node.right)
+            left = self.visit(node.left)
+            return Conjuction(left, right)
+        x = ComparisionExprGenerator().visit(node)
+        return x
+
+    def visit_Expr(self, node: ast.Expr):
+        return self.visit(node.value)
+
+    def visit_Compare(self, node: ast.Compare):
+        if isinstance(node.ops[0], ast.BitAnd):
+            right = self.visit(node.comparators[0])
+            left = self.visit(node.left)
+            return Conjuction(left, right)
+        x = ComparisionExprGenerator().visit(node)
+        return x
 
     def visit_Subscript(self, node: ast.Subscript):
         if isinstance(node.slice.value, ast.Subscript): args = [self.visit(node.slice.value)]
@@ -82,6 +96,58 @@ class ExprVisitor(ast.NodeVisitor):
 
     def visit_Name(self, node: ast.Name):
         return utils.make_id(node.id)
+
+class ComparisionExprValidator(ast.NodeVisitor):
+    def visit_Constant(self, node: ast.Constant):
+        if not str(node.value).isdigit():
+            raise Exception(f"Unexpected type constant {str(node.value)}, only expected an integer")
+
+    def visit_Name(self, node: ast.Name):
+        if not node.id[0].isupper():
+            raise Exception(f"Unexpected term {str(node.id)}, only expected an integer term or a variable")
+
+    def visit_Compare(self, node: ast.Compare):
+        if len(node.comparators) != 1:
+            raise Exception(f"Only expected one comparator, found {str(len(node.comparators))}")
+        if len(node.ops) != 1:
+            raise Exception(f"Only expected one operator, found {str(len(node.ops))}")
+        op = node.ops[0]
+        if not isinstance(op, ast.Eq):
+            raise Exception(f"The operator {str(node.ops[0])} was unexpected, only expected Is")
+        self.visit(node.left)
+        self.visit(node.comparators[0])
+
+    def visit_BinOp(self, node: ast.BinOp):
+        self.visit(node.left)
+        list(map(lambda xClass: isinstance(node.op, xClass), [ast.Add]))
+        self.visit(node.right)
+
+class ComparisionExprGenerator(ast.NodeTransformer):
+    def find_correct_operator(self, op: ast.AST):
+        if isinstance(op, ast.Eq): return "=="
+        elif isinstance(op, ast.Add): return "+"
+        else: raise Exception(f"Unsupported operator {ast.dump(op)}")
+
+    def visit_Constant(self, node: ast.Constant):
+        return Term(int(node.value))
+
+    def visit_Name(self, node: ast.Name):
+        return Var(node.id)
+
+    def visit_Expr(self, node: ast.Expr):
+        return self.visit(node.value)
+
+    def visit_Compare(self, node: ast.Compare):
+        left = self.visit(node.left)
+        op = self.find_correct_operator(node.ops[0])
+        right = self.visit(node.comparators[0])
+        return BinOp(left, op, right)
+
+    def visit_BinOp(self, node: ast.BinOp):
+        left = self.visit(node.left)
+        op = self.find_correct_operator(node.op)
+        right = self.visit(node.right)
+        return BinOp(left, op, right)
 
 class FullTransformerVisitor(ast.NodeVisitor):
     _fields = ["env"]
@@ -100,6 +166,7 @@ class FullTransformerVisitor(ast.NodeVisitor):
         fact = self.expr_visitor.visit(target)
         query = self.expr_visitor.visit(node.value)
         rule = Rule(fact, query)
+
         self.env.add(f"{fact.name}/{str(len(fact))}", rule)
 
     def __str__(self):
@@ -113,7 +180,8 @@ class SyntaxValidator(ast.NodeVisitor):
         ast.BinOp,
         ast.Assign,
         ast.Subscript,
-        ast.Name
+        ast.Name,
+        ast.Compare
         ]
         super().__init__(*args, *kwargs)
 
@@ -122,6 +190,7 @@ class SyntaxValidator(ast.NodeVisitor):
         else: raise Exception("Only subscript and name nodes allowed")
 
     def visit_Assign(self, node: ast.Assign):
+        comparision_validator = ComparisionExprValidator()
         if len(node.targets) != 1:
             raise Exception("Expected to only have one target")
         target = node.targets[0]
@@ -134,6 +203,9 @@ class SyntaxValidator(ast.NodeVisitor):
                 self.visit(node.value.left)
                 self.visit(node.value.right)
                 return
+            elif isinstance(node.value, ast.BinOp) or isinstance(node.value, ast.Expr) or isinstance(node.value, ast.Compare):
+                comparision_validator.visit(node.value)
+                return
             raise Exception("Assigments are only allowed to be subscripts or names")
         self.visit(target)
         self.visit(node.value)
@@ -142,6 +214,17 @@ class SyntaxValidator(ast.NodeVisitor):
         if not node.id[0].islower():
             raise Exception("Expected an identfier starting with a lowercase letter")
     
+    def visit_BinOp(self, node: ast.BinOp):
+        self.visit(node.right)
+        self.visit(node.left)
+
+    def visit_Compare(self, node: ast.Compare):
+        if isinstance(node.ops[0], ast.BitAnd):
+            self.visit(node.comparators[0])
+            self.visit(node.left)
+            return
+        ComparisionExprValidator().visit(node)
+
     def visit_Constant(self, node):
         if str(node.value).isdigit(): return Term(int(node.value))
         raise Exception(f"Unexpected type constant {str(node.value)}, only expected identifier or an integer")
@@ -168,6 +251,9 @@ class TermCreator(RulesVisitor):
     def visit_Rule(self, rule: Rule):
         return Rule(self.visit(rule.fact), None if rule.condition == None else self.visit(rule.condition))
 
+    def visit_BinOp(self, bin_op: BinOp):
+        return BinOp(self.visit(bin_op.left), bin_op.op, self.visit(bin_op.right))
+
     def visit_Fact(self, fact: Fact):
         if len(fact) == 0:
             return Term(fact.name)
@@ -186,6 +272,9 @@ class GoalCreator(RulesVisitor):
 
     def visit_Rule(self, rule: Rule):
         return Rule(self.visit(rule.fact), None if rule.condition == None else self.visit(rule.condition))
+
+    def visit_BinOp(self, bin_op: BinOp):
+        return BinOp(self.visit(bin_op.left), bin_op.op, self.visit(bin_op.right))
 
     def visit_Fact(self, fact: Fact):
         if len(fact) == 0:
@@ -216,6 +305,9 @@ class CorrectArgumentRules(RulesVisitor):
         if rule.condition != None:
             self.visit(rule.condition)
 
+    def visit_BinOp(self, bin_op: BinOp):
+        return BinOp(self.visit(bin_op.left), bin_op.op, self.visit(bin_op.right))
+
     def visit_Fact(self, fact: Fact):
         vals = self.env.get(fact.name)
         if vals is None:
@@ -240,6 +332,9 @@ class RulesToPython(RulesVisitor):
     def visit_Fact(self, fact: Fact):
         name = "\"" + fact.name + "\""
         return f"Fact({name}, [{', '.join(list(map(self.visit, fact.args)))}])"
+
+    def visit_BinOp(self, bin_op: BinOp):
+        return f"BinOp({self.visit(bin_op.left)}, \"{bin_op.op}\", {self.visit(bin_op.right)})"
 
     def visit_Goals(self, goals: Goals):
         return f"Goals([{', '.join(list(map(self.visit, goals.goals)))}])"
