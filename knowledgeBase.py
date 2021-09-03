@@ -3,8 +3,9 @@ from visitors import RulesVisitor
 from sys import stderr
 from functools import reduce
 from multipleDispatch import MultipleDispatch
-from unificationVisitor import Unifier, UniqueVariableSubstitutor, Substitutions, Substituter, RemoveNumberedExprVisitor
-from nodes import Var, Term, Conjuction, BinOp, Fact, Goals, Rule, Rules
+from unificationVisitor import Unifier, UniqueVariableSubstitutor, Substitutions, Substituter, RemoveNumberedExprVisitor, TopLevelBinOpCounter, ConstraintGenerator
+from nodes import Var, Term, Conjuction, BinOp, Fact, Goals, Rule, Rules, SystemEquations
+from pyDuck import State
 
 class KnowledgeBase:
     def __init__(self, knowledge):
@@ -29,21 +30,42 @@ class Query:
         return getattr(self, f"lookup_{type(node).__name__}")(node)
 
     def lookup_Goals(self, goals: Goals):
-        def solutions(index: int, unifier: Unifier):
+        max_constraints = TopLevelBinOpCounter().visit(goals)
+        def solutions(index: int, equations: SystemEquations, unifier: Unifier):
             if index < len(goals.goals):
                 goal = goals.goals[index]
-                for item in self.lookup(Substituter(unifier.env).visit(goal)):
+
+                if isinstance(goal, BinOp):
+                    equations.add_equation(Substituter(unifier.env).visit(goal))
+                    propogation = equations.propogate()
+                    if propogation is None: return
                     new_unifier = Unifier()
-                    if not new_unifier.unify(goal, item): continue
+                    new_unifier.env.substitutions = propogation
                     unified = Unifier.merge(Unifier.inheriting(unifier), new_unifier)
                     if unified != None:
-                        yield from solutions(index+1, unified)
+                        if len(equations) == max_constraints and max_constraints != 0 and (not equations.solved):
+                            print(unified.env, equations)
+                            raise NotImplementedError("The actual search of variables is yet to be integrated")
+                        else: yield from solutions(index+1, equations.clone(), unified.clone())
+                else:
+                    for item in self.lookup(Substituter(unifier.env).visit(goal)):
+                        new_unifier = Unifier()
+                        if not new_unifier.unify(goal, item): continue
+                        unified = Unifier.merge(Unifier.inheriting(unifier), new_unifier)
+                        if unified != None:
+                            yield from solutions(index+1, equations.given_env(unified.env), unified)
             else:
                 yield Substituter(unifier.env).visit(goals)
-        yield from solutions(0, Unifier())
+        yield from solutions(0, SystemEquations(ConstraintGenerator, Substitutions()), Unifier())
 
     def lookup_BinOp(self, binOp: BinOp):
-        raise NotImplementedError("Constraints are yet to be implemented")
+        constraintGenerator = SystemEquations(ConstraintGenerator, Substitutions())
+        constraintGenerator.add_equation(binOp)
+        for solution in constraintGenerator.solve():
+            substitutions = Substitutions()
+            substitutions.substitutions = solution
+            new_fact = Substituter(substitutions).visit(binOp)
+            yield new_fact
 
     def lookup_Fact(self, fact: Fact):
         possibilities = self.knowledge_base.knowledge.get(fact.name)

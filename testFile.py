@@ -71,6 +71,9 @@ with lst_rules in SocraticSolver:
     lst[nil]
     lst[cons[L, X]] = lst[X]
 
+    lst_length[nil, 0]
+    lst_length[cons[X, Xs], L] = lst_length[Xs, N] & (L == N+1)
+
     lst_member[X, cons[X, M]]
     lst_member[X, cons[P, TAIL]] = lst_member[X, TAIL]
 
@@ -87,10 +90,14 @@ print("# Concatenation")
 for unifier, _ in lst_rules.lookup(SocraticQuery(lst_concat[cons[x, cons[y, nil]], cons[a, cons[b, nil]], Res])):
     print(utils.dict_as_eqs(Substitutions.optionally_resolve(unifier.env)))
 
-# print("---~~Numbers~~---")
-# with lst_rules in SocraticSolver:
-#     syntax_trial[X, Y] = (Y == X+1) & inc[Y, Y] & (Y == X+2)
-#     inc[X, Y] = Y == X+1
+print("# Count Members")
+for unifier, _ in lst_rules.lookup(SocraticQuery(lst_length[cons[a, cons[b, cons[c, nil]]], N])):
+    print(utils.dict_as_eqs(Substitutions.optionally_resolve(unifier.env)))
 
-# for unifier, _ in lst_rules.lookup(SocraticQuery(inc[7, X])):
-#     print(utils.dict_as_eqs(Substitutions.optionally_resolve(unifier.env)))
+print("---~~Numbers~~---")
+with lst_rules in SocraticSolver:
+    semantic_trial[X, Y, Z] = (Y == X+1) & inc[Y, Z] & (Z == X+2)
+    inc[X, Y] = Y == X+1
+
+for _, sub in lst_rules.lookup(SocraticQuery(semantic_trial[L, 8, N])):
+    print(sub)

@@ -3,6 +3,7 @@ from visitors import RulesVisitor
 from functools import reduce
 from multipleDispatch import MultipleDispatch
 from nodes import Var, Term, BinOp, Fact, Goals, Rule, Rules
+from pyDuck import Expression, Variable, Constraint
 
 class DisjointOrderedSets:
     def __init__(self):
@@ -181,6 +182,13 @@ class Unifier:
                 if not self.unify(a, b): return False
             return True
 
+        @self.unify.addCase(BinOp, BinOp)
+        def _unify(b1, b2):
+            if b1.op != b2.op: return False
+            if not self.unify(b1.left, b2.left): return False
+            if not self.unify(b1.right, b2.right): return False
+            return True
+
         @self.unify.addCase(Goals, Goals)
         def _unify(g1, g2):
             if len(g1) != len(g2): return False
@@ -294,6 +302,53 @@ def substitute_environment(env: Substitutions):
     new_env = env.clone()
     new_env.substitutions = {k:Substituter(env, _resolved_env=True).visit(v) for k,v in new_env.substitutions.items()}
     return new_env
+
+class ConstraintGenerator(RulesVisitor):
+    def __init__(self, domains: Substitutions, *args, **kwargs):
+        self.domains = domains
+        super().__init__(*args, **kwargs)
+
+    def get_domain(self, name):
+        domain = self.domains.get_variable(name)
+        if not isinstance(domain, Term): return (0, 256)
+        if not isinstance(domain.name, int): return (0, 256)
+        return (domain.name, domain.name)
+
+    def visit_Term(self, term: Term): return Expression(int(term.name))
+
+    def visit_Var(self, var: Var):
+        (lower, upper) = self.get_domain(var.name)
+        return Variable(var.name, lower, upper)
+
+    def visit_BinOp(self, bin_op: BinOp):
+        left = self.visit(bin_op.left)
+        right = self.visit(bin_op.right)
+        op = bin_op.op
+        if op == "==": return left == right
+        elif op == "+": return left + right
+        else: raise Exception(f"Unknown operator {op}")
+
+    def visit_Fact(self, fact: Fact):
+        raise Exception(f"{str(fact)} should not be here in a supposed constraint. Get your syntax validator in order.")
+
+    def visit_Goals(self, goals: Goals):
+        raise Exception(f"{str(goals)} should not be here in a supposed constraint. Get your syntax validator in order.")
+
+    def visit_Rule(self, rule: Rule):
+        return Exception(f"{str(rule)} should not be here in a supposed constraint. Get your syntax validator in order.")
+
+    def generate_constraint(self, node):
+        return Constraint(self.visit(node))
+
+class TopLevelBinOpCounter(RulesVisitor):
+    def visit_Term(self, term: Term): return 0
+    def visit_Fact(self, fact: Fact): return 0
+    def visit_Var(self, var: Var): return 0
+    def visit_BinOp(self, bin_op: BinOp): return 1
+
+    def visit_Goals(self, goals: Goals): return sum(map(self.visit, goals.goals))
+
+    def visit_Rule(self, rule: Rule): return self.visit(rule.fact) + (0 if rule.condition == None else self.visit(rule.condition))
 
 # # Unification Basic test
 # unifier = Unifier()

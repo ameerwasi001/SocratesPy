@@ -35,7 +35,7 @@ for (_, sub) in addition_rules.lookup(
 Fact('add/3', [Var('A'), Fact('s/1', [Var('A')]), Fact('s/1', [Fact('s/1', [Fact('s/1', [Term('0')])])])])):
     print(sub)
 print('---~~List~~---')
-lst_rules = KnowledgeBase({'lst/1': [Rule(Fact('lst/1', [Term('nil')]), None), Rule(Fact('lst/1', [Fact('cons/2', [Var('L'), Var('X')])]), Fact('lst/1', [Var('X')]))], 'lst_member/2': [Rule(Fact('lst_member/2', [Var('X'), Fact('cons/2', [Var('X'), Var('M')])]), None), Rule(Fact('lst_member/2', [Var('X'), Fact('cons/2', [Var('P'), Var('TAIL')])]), Fact('lst_member/2', [Var('X'), Var('TAIL')]))], 'lst_concat/3': [Rule(Fact('lst_concat/3', [Term('nil'), Var('L'), Var('L')]), None), Rule(Fact('lst_concat/3', [Fact('cons/2', [Var('X1'), Var('L1')]), Var('L2'), Fact('cons/2', [Var('X1'), Var('L3')])]), Fact('lst_concat/3', [Var('L1'), Var('L2'), Var('L3')]))]})
+lst_rules = KnowledgeBase({'lst/1': [Rule(Fact('lst/1', [Term('nil')]), None), Rule(Fact('lst/1', [Fact('cons/2', [Var('L'), Var('X')])]), Fact('lst/1', [Var('X')]))], 'lst_length/2': [Rule(Fact('lst_length/2', [Term('nil'), Term('0')]), None), Rule(Fact('lst_length/2', [Fact('cons/2', [Var('X'), Var('Xs')]), Var('L')]), Goals([Fact('lst_length/2', [Var('Xs'), Var('N')]), BinOp(Var('L'), '==', BinOp(Var('N'), '+', Term('1')))]))], 'lst_member/2': [Rule(Fact('lst_member/2', [Var('X'), Fact('cons/2', [Var('X'), Var('M')])]), None), Rule(Fact('lst_member/2', [Var('X'), Fact('cons/2', [Var('P'), Var('TAIL')])]), Fact('lst_member/2', [Var('X'), Var('TAIL')]))], 'lst_concat/3': [Rule(Fact('lst_concat/3', [Term('nil'), Var('L'), Var('L')]), None), Rule(Fact('lst_concat/3', [Fact('cons/2', [Var('X1'), Var('L1')]), Var('L2'), Fact('cons/2', [Var('X1'), Var('L3')])]), Fact('lst_concat/3', [Var('L1'), Var('L2'), Var('L3')]))]})
 lst1 = Fact('cons', [Term('x'), Fact('cons', [Term('y'), Term('nil')])])
 lst2 = Fact('cons', [Term('a'), Fact('cons', [Term('b'), Term('nil')])])
 for (_, sub) in lst_rules.lookup(make_expr(Fact('lst_member', [Term('x'), lst1]))):
@@ -44,3 +44,12 @@ print('# Concatenation')
 for (unifier, _) in lst_rules.lookup(
 Fact('lst_concat/3', [Fact('cons/2', [Term('x'), Fact('cons/2', [Term('y'), Term('nil')])]), Fact('cons/2', [Term('a'), Fact('cons/2', [Term('b'), Term('nil')])]), Var('Res')])):
     print(utils.dict_as_eqs(Substitutions.optionally_resolve(unifier.env)))
+print('# Count Members')
+for (unifier, _) in lst_rules.lookup(
+Fact('lst_length/2', [Fact('cons/2', [Term('a'), Fact('cons/2', [Term('b'), Fact('cons/2', [Term('c'), Term('nil')])])]), Var('N')])):
+    print(utils.dict_as_eqs(Substitutions.optionally_resolve(unifier.env)))
+print('---~~Numbers~~---')
+lst_rules = KnowledgeBase({'semantic_trial/3': [Rule(Fact('semantic_trial/3', [Var('X'), Var('Y'), Var('Z')]), Goals([BinOp(Var('Y'), '==', BinOp(Var('X'), '+', Term('1'))), Fact('inc/2', [Var('Y'), Var('Z')]), BinOp(Var('Z'), '==', BinOp(Var('X'), '+', Term('2')))]))], 'inc/2': [Rule(Fact('inc/2', [Var('X'), Var('Y')]), BinOp(Var('Y'), '==', BinOp(Var('X'), '+', Term('1'))))]})
+for (_, sub) in lst_rules.lookup(
+Fact('semantic_trial/3', [Var('L'), Term('8'), Var('N')])):
+    print(sub)
