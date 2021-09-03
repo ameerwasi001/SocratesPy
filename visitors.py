@@ -13,7 +13,7 @@ def make_code_and_validate_nodes(target_name, body, nodes_path, solver_path):
     list(map(visitor.visit, body))
     rules = make_expr(visitor.env)
     goalCreator = GoalCreator()
-    rules = GoalCreator().visit(rules)
+    rules = goalCreator.visit(rules)
     arity_checker = CorrectArgumentRules(rules)
     arity_checker.visit_all(rules)
     python_code_rules = RulesToPython().visit(rules)
@@ -343,7 +343,7 @@ class RulesToPython(RulesVisitor):
         return f"Conjuction({self.visit(conjuction.right)}, {self.visit(conjuction.left)})"
 
     def visit_Term(self, node):
-        return f'Term("{node.name}")'
+        return f'Term("{node.name}")' if isinstance(node.name, str) else f"Term({node.name})"
 
     def visit_Var(self, var: Var):
         return "Var(\"" + var.name + "\")"

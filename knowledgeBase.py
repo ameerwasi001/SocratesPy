@@ -44,9 +44,8 @@ class Query:
                     unified = Unifier.merge(Unifier.inheriting(unifier), new_unifier)
                     if unified != None:
                         if len(equations) == max_constraints and max_constraints != 0 and (not equations.solved):
-                            print(unified.env, equations)
                             raise NotImplementedError("The actual search of variables is yet to be integrated")
-                        else: yield from solutions(index+1, equations.clone(), unified.clone())
+                        else: yield from solutions(index+1, equations.clone(), unified)
                 else:
                     for item in self.lookup(Substituter(unifier.env).visit(goal)):
                         new_unifier = Unifier()
@@ -83,4 +82,5 @@ class Query:
                         new_unifier = Unifier()
                         unification = new_unifier.unify(body, item)
                         if unification == None or unification == False: continue
-                        yield Substituter(new_unifier.env).visit(new_fact)
+                        unified_fact = Substituter(new_unifier.env).visit(new_fact)
+                        yield unified_fact
