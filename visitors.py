@@ -112,8 +112,8 @@ class ComparisionExprValidator(ast.NodeVisitor):
         if len(node.ops) != 1:
             raise Exception(f"Only expected one operator, found {str(len(node.ops))}")
         op = node.ops[0]
-        if not isinstance(op, ast.Eq):
-            raise Exception(f"The operator {str(node.ops[0])} was unexpected, only expected Is")
+        if not (isinstance(op, ast.Eq) or isinstance(op, ast.Gt)):
+            raise Exception(f"The operator {str(node.ops[0])} was unexpected, only expected == or >")
         self.visit(node.left)
         self.visit(node.comparators[0])
 
@@ -125,6 +125,7 @@ class ComparisionExprValidator(ast.NodeVisitor):
 class ComparisionExprGenerator(ast.NodeTransformer):
     def find_correct_operator(self, op: ast.AST):
         if isinstance(op, ast.Eq): return "=="
+        elif isinstance(op, ast.Gt): return ">"
         elif isinstance(op, ast.Add): return "+"
         else: raise Exception(f"Unsupported operator {ast.dump(op)}")
 

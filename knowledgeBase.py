@@ -36,8 +36,8 @@ class Query:
                 goal = goals.goals[index]
 
                 if isinstance(goal, BinOp):
-                    equations.add_equation(Substituter(unifier.env).visit(goal))
-                    propogation = equations.propogate()
+                    equations.add_equation(goal)
+                    propogation = equations.substituted(unifier.env).propogate()
                     if propogation is None: return
                     new_unifier = Unifier()
                     new_unifier.env.substitutions = propogation
@@ -55,10 +55,10 @@ class Query:
                             yield from solutions(index+1, equations.given_env(unified.env), unified)
             else:
                 yield Substituter(unifier.env).visit(goals)
-        yield from solutions(0, SystemEquations(ConstraintGenerator, Substitutions()), Unifier())
+        yield from solutions(0, SystemEquations(ConstraintGenerator, Substituter, Substitutions()), Unifier())
 
     def lookup_BinOp(self, binOp: BinOp):
-        constraintGenerator = SystemEquations(ConstraintGenerator, Substitutions())
+        constraintGenerator = SystemEquations(ConstraintGenerator, Substituter, Substitutions())
         constraintGenerator.add_equation(binOp)
         for solution in constraintGenerator.solve():
             substitutions = Substitutions()

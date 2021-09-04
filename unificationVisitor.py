@@ -325,6 +325,7 @@ class ConstraintGenerator(RulesVisitor):
         right = self.visit(bin_op.right)
         op = bin_op.op
         if op == "==": return left == right
+        elif op == ">": return left > right
         elif op == "+": return left + right
         else: raise Exception(f"Unknown operator {op}")
 

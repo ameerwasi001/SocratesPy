@@ -148,10 +148,12 @@ class Rules:
         return str(new_env)
 
 class SystemEquations:
-    def __init__(self, constraintGenerator, env):
+    def __init__(self, constraintGenerator, substitutor, env):
         self.eqs = []
         self.solved = True
         self.constraintGeneratorClass = constraintGenerator
+        self.substitutorClass = substitutor
+        self.substitutor = substitutor(env)
         self.constraintGenerator = self.constraintGeneratorClass(env.clone())
 
     def add_equation(self, eq):
@@ -161,7 +163,7 @@ class SystemEquations:
         constraintGenerator = self.constraintGenerator
         constraints = []
         for constraint in self.eqs:
-            constraints.append(constraintGenerator.generate_constraint(constraint))
+            constraints.append(constraintGenerator.generate_constraint(self.substitutor.visit(constraint)))
         state = State.from_whole_expression(constraints)
         self.solved = state.solved
         return state
@@ -178,16 +180,21 @@ class SystemEquations:
             yield {k:Term(v.value) for k,v in solution.items()}
 
     def clone(self):
-        sys = SystemEquations(self.constraintGeneratorClass, self.constraintGenerator.domains.clone())
+        sys = SystemEquations(self.constraintGeneratorClass, self.substitutorClass, self.constraintGenerator.domains.clone())
         sys.solved = self.solved
         sys.eqs = self.eqs[:]
         return sys
 
     def given_env(self, env):
-        sys = SystemEquations(self.constraintGeneratorClass, env)
+        sys = SystemEquations(self.constraintGeneratorClass, self.substitutorClass, env)
         sys.solved = self.solved
         sys.eqs = self.eqs[:]
         return sys
+
+    def substituted(self, env):
+        new_sys = self.given_env(env)
+        new_sys.eqs = [new_sys.substitutor.visit(eq) for eq in new_sys.eqs]
+        return new_sys
 
     def __len__(self):
         return len(self.eqs)
