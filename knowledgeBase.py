@@ -36,15 +36,20 @@ class Query:
                 goal = goals.goals[index]
 
                 if isinstance(goal, BinOp):
-                    equations.add_equation(goal)
-                    propogation = equations.substituted(unifier.env).propogate()
+                    equations.add_equation(Substituter(unifier.env).visit(goal))
+                    propogation = equations.propogate()
                     if propogation is None: return
                     new_unifier = Unifier()
                     new_unifier.env.substitutions = propogation
                     unified = Unifier.merge(Unifier.inheriting(unifier), new_unifier)
                     if unified != None:
                         if len(equations) == max_constraints and max_constraints != 0 and (not equations.solved):
-                            raise NotImplementedError("The actual search of variables is yet to be integrated")
+                            for solution in equations.solve():
+                                substitutions = Substitutions()
+                                substitutions.substitutions = solution
+                                unified = Unifier.merge(Unifier.inheriting(unifier), Unifier.from_env(substitutions))
+                                if unified == None: continue
+                                yield from solutions(index+1, equations.given_env(unified.env), unified)
                         else: yield from solutions(index+1, equations.clone(), unified)
                 else:
                     for item in self.lookup(Substituter(unifier.env).visit(goal)):

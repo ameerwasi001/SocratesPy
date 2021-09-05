@@ -200,7 +200,7 @@ class SystemEquations:
         return len(self.eqs)
     
     def __str__(self):
-        return "{" + ", ".join(map(str, self.prepare_state().variables)) + "}"
+        return "{" + ", ".join(map(str, self.prepare_state().constraints)) + "}"
 
     def __repr__(self):
-        return "{" + ", ".join(map(repr, self.prepare_state().variables)) + "}"
+        return "{" + ", ".join(map(repr, self.prepare_state().constraints)) + "}"

@@ -127,6 +127,8 @@ class ComparisionExprGenerator(ast.NodeTransformer):
         if isinstance(op, ast.Eq): return "=="
         elif isinstance(op, ast.Gt): return ">"
         elif isinstance(op, ast.Add): return "+"
+        elif isinstance(op, ast.Sub): return "-"
+        elif isinstance(op, ast.Mult): return "*"
         else: raise Exception(f"Unsupported operator {ast.dump(op)}")
 
     def visit_Constant(self, node: ast.Constant):

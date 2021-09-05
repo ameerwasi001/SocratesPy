@@ -72,10 +72,7 @@ with lst_rules in SocraticSolver:
     lst[cons[L, X]] = lst[X]
 
     lst_length[nil, 0]
-    lst_length[Xs, L] = lst_length[Xs, 0, L]
-
-    lst_length[nil, L, L]
-    lst_length[cons[X, Xs], T, L] = (L>T) & (T1 == T+1) & lst_length[Xs, T1, L]
+    lst_length[cons[X, Xs], L] = lst_length[Xs, N] & (L == N+1)
 
     lst_member[X, cons[X, M]]
     lst_member[X, cons[P, TAIL]] = lst_member[X, TAIL]
@@ -102,5 +99,12 @@ with lst_rules in SocraticSolver:
     semantic_trial[X, Y, Z] = (Y == X+1) & inc[Y, Z] & (Z == X+2)
     inc[X, Y] = Y == X+1
 
-for _, sub in lst_rules.lookup(SocraticQuery(semantic_trial[L, 8, M])):
+    fac[0, 1]
+    fac[N, F] = (N > 0) & (F1 > 0) & (N1 == N-1) & (F == N*F1) & fac[N1, F1]
+
+for _, sub in lst_rules.lookup(SocraticQuery(semantic_trial[L, 8, N])):
     print(sub)
+
+print("# Factorial")
+for unifier, _ in lst_rules.lookup(SocraticQuery(fac[4, F])):
+    print(utils.dict_as_eqs(Substitutions.optionally_resolve(unifier.env)))
