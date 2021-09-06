@@ -322,8 +322,8 @@ class CorrectArgumentRules(RulesVisitor):
     def visit_Goals(self, goals: Goals):
         list(map(self.visit, goals.goals))
 
-    def visit_Var(self, node): pass
-    def visit_Term(self, node): pass
+    def visit_Var(self, _): pass
+    def visit_Term(self, _): pass
 
 class RulesToPython(RulesVisitor):
     def visit_Rules(self, rules: Rules):

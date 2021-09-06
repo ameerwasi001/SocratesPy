@@ -3,7 +3,7 @@ from visitors import RulesVisitor
 from sys import stderr
 from functools import reduce
 from multipleDispatch import MultipleDispatch
-from unificationVisitor import Unifier, UniqueVariableSubstitutor, Substitutions, Substituter, RemoveNumberedExprVisitor, TopLevelBinOpCounter, ConstraintGenerator
+from unificationVisitor import Unifier, UniqueVariableSubstitutor, Substitutions, Substituter, RemoveNumberedExprVisitor, HasUnhyphenatedVariable, TopLevelBinOpCounter, ConstraintGenerator
 from nodes import Var, Term, Conjuction, BinOp, Fact, Goals, Rule, Rules, SystemEquations
 from pyDuck import State
 
@@ -12,17 +12,33 @@ class KnowledgeBase:
         self.knowledge = knowledge    
 
     def lookup(self, node): 
-        for res in Query(self).lookup(node):
+        broken = False
+        for res in Query(self, False).lookup(node):
             unifier = Unifier()
             if unifier.unify(node, res) == None: stderr.write("Internal Error: Incomplete substitution\n")
             returning_subs = {k:RemoveNumberedExprVisitor().visit(v) for k,v in unifier.env.substitutions.items()}
             returning_unifier = unifier.clone()
             returning_unifier.env.substitutions = returning_subs
-            yield (returning_unifier, RemoveNumberedExprVisitor().visit(Substituter(returning_unifier.env).visit(node)))
+            new_res = Substituter(returning_unifier.env).visit(node)
+            if HasUnhyphenatedVariable().visit(new_res):
+                broken = True
+                break
+            yield (returning_unifier, RemoveNumberedExprVisitor().visit(new_res))
+
+        if broken:
+            for res in Query(self, True).lookup(node):
+                searching_unifier = Unifier()
+                if searching_unifier.unify(node, res) == None: stderr.write("Internal Error: Incomplete substitution\n")
+                searching_returning_subs = {k:RemoveNumberedExprVisitor().visit(v) for k,v in searching_unifier.env.substitutions.items()}
+                searching_returning_unifier = searching_unifier.clone()
+                searching_returning_unifier.env.substitutions = searching_returning_subs
+                searching_new_res = Substituter(searching_returning_unifier.env).visit(node)
+                yield (searching_returning_unifier, RemoveNumberedExprVisitor().visit(searching_new_res))
 
 class Query:
-    def __init__(self, knowledge):
+    def __init__(self, knowledge, search):
         self.knowledge_base = knowledge
+        self.search = search
         self.unique_substitutor = UniqueVariableSubstitutor()
 
     def lookup(self, node):
@@ -43,7 +59,7 @@ class Query:
                     new_unifier.env.substitutions = propogation
                     unified = Unifier.merge(Unifier.inheriting(unifier), new_unifier)
                     if unified != None:
-                        if len(equations) == max_constraints and max_constraints != 0 and (not equations.solved):
+                        if self.search and len(equations) == max_constraints and max_constraints != 0 and (not equations.solved):
                             for solution in equations.solve():
                                 substitutions = Substitutions()
                                 substitutions.substitutions = solution

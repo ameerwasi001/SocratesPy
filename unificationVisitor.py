@@ -65,7 +65,7 @@ class DisjointOrderedSets:
                         break
             if defined == None:
                 if raises: raise Exception(f"Could not resolve relation because none of {rel} has a known value")
-                else: defined = last
+                else: defined = Var(last)
             for k in rel:
                 definitions[k] = defined
         return definitions
@@ -352,6 +352,27 @@ class TopLevelBinOpCounter(RulesVisitor):
     def visit_Goals(self, goals: Goals): return sum(map(self.visit, goals.goals))
 
     def visit_Rule(self, rule: Rule): return self.visit(rule.fact) + (0 if rule.condition == None else self.visit(rule.condition))
+
+class HasUnhyphenatedVariable(RulesVisitor):
+    def visit_Rules(self, rules: Rules):
+        return any([list(map(self.visit, vs)) for _, vs in rules.env.items()])
+
+    def visit_Rule(self, rule: Rule):
+        return self.visit(rule.fact) or self.visit(rule.condition)
+
+    def visit_BinOp(self, bin_op: BinOp):
+        return self.visit(bin_op.left) or self.visit(bin_op.right)
+
+    def visit_Fact(self, fact: Fact):
+        return any(map(self.visit, fact.args))
+
+    def visit_Goals(self, goals: Goals):
+        return any(map(self.visit, goals.goals))
+
+    def visit_Var(self, var: Var):
+        return (not ("-" in var.name))
+
+    def visit_Term(self, _): return False
 
 # # Unification Basic test
 # unifier = Unifier()

@@ -71,8 +71,10 @@ with lst_rules in SocraticSolver:
     lst[nil]
     lst[cons[L, X]] = lst[X]
 
-    lst_length[nil, 0]
-    lst_length[cons[X, Xs], L] = lst_length[Xs, N] & (L == N+1)
+    lst_length[Xs, L] = lst_length[Xs, 0, L]
+
+    lst_length[nil, L, L]
+    lst_length[cons[X, Xs], T, L] = (L>T) & (T1 == T+1) & lst_length[Xs, T1, L]
 
     lst_member[X, cons[X, M]]
     lst_member[X, cons[P, TAIL]] = lst_member[X, TAIL]

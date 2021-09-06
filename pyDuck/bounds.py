@@ -89,8 +89,10 @@ class Domain:
 
     def is_in_domain(self, index):
         index += self.offset
-        return (self.domain[(index + 1) // self.BITS_PER_DATATYPE - 1 if ((index + 1) % self.BITS_PER_DATATYPE == 0) else
-				(index + 1) // self.BITS_PER_DATATYPE] & UInt64(0x1 << (index % self.BITS_PER_DATATYPE))) != 0
+        new_index = ((index + 1) // self.BITS_PER_DATATYPE) - 1 if ((index + 1) % self.BITS_PER_DATATYPE == 0) else (index + 1) // self.BITS_PER_DATATYPE
+        if new_index < len(self.domain):
+            return (self.domain[new_index] & UInt64(0x1 << (index % self.BITS_PER_DATATYPE))) != 0
+        return False
 
     def remove_from_domain(self, index):
         index += self.offset

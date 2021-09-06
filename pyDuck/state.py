@@ -131,6 +131,7 @@ class State:
             var.instantiate(self.depth, instantiation_res_ref)
 
             if instantiation_res_ref["result"] != DomainOperationResult.InstantiateSuccessful:
+                self.depth -= 1
                 return False
 
             if self.constraints_violated() or any(map(lambda v: v.size() == 0, unassigned_vars)):
