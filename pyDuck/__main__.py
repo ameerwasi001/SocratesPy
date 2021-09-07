@@ -22,7 +22,7 @@ f1 = Variable("f1", 0, 255)
 state = State([n, f1, n1, f], [
     Constraint(n > Expression(0)),
     Constraint(f1 > Expression(0)),
-    Constraint(n == Expression(3)),
+    Constraint(f == Expression(24)),
     Constraint(n1 == n - Expression(1)),
     Constraint(f == n*f1)
 ])

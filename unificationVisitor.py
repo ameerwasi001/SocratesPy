@@ -326,9 +326,11 @@ class ConstraintGenerator(RulesVisitor):
         op = bin_op.op
         if op == "==": return left == right
         elif op == ">": return left > right
+        elif op == ">=": return left >= right
         elif op == "+": return left + right
         elif op == "-": return left - right
         elif op == "*": return left * right
+        elif op == "/": return left / right
         else: raise Exception(f"Unknown operator {op}")
 
     def visit_Fact(self, fact: Fact):

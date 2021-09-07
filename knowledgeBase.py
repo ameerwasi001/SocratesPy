@@ -11,8 +11,9 @@ class KnowledgeBase:
     def __init__(self, knowledge):
         self.knowledge = knowledge    
 
-    def lookup(self, node): 
+    def lookup(self, node):
         broken = False
+        solution_set = set()
         for res in Query(self, False).lookup(node):
             unifier = Unifier()
             if unifier.unify(node, res) == None: stderr.write("Internal Error: Incomplete substitution\n")
@@ -23,7 +24,9 @@ class KnowledgeBase:
             if HasUnhyphenatedVariable().visit(new_res):
                 broken = True
                 break
-            yield (returning_unifier, RemoveNumberedExprVisitor().visit(new_res))
+            un_numbered_res = RemoveNumberedExprVisitor().visit(new_res)
+            solution_set.add(un_numbered_res)
+            yield (returning_unifier, un_numbered_res)
 
         if broken:
             for res in Query(self, True).lookup(node):
@@ -33,7 +36,9 @@ class KnowledgeBase:
                 searching_returning_unifier = searching_unifier.clone()
                 searching_returning_unifier.env.substitutions = searching_returning_subs
                 searching_new_res = Substituter(searching_returning_unifier.env).visit(node)
-                yield (searching_returning_unifier, RemoveNumberedExprVisitor().visit(searching_new_res))
+                searching_un_numbered_res = RemoveNumberedExprVisitor().visit(searching_new_res)
+                if searching_un_numbered_res in solution_set: continue
+                yield (searching_returning_unifier, searching_un_numbered_res)
 
 class Query:
     def __init__(self, knowledge, search):
