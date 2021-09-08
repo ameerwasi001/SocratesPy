@@ -1,5 +1,5 @@
 # SocratesPy
-Embedded logic programming for python written in native python, by using python's versatile native syntax. This library utilizes the subscript syntax of python to preserve closer connection with prolog and internally transforms that into a data structure that is then easily and efficiently, extensible and interpolable from native python. It's about time, I introduce SocratesPy's syntax.
+Embedded constraint logic programming for python written in native python, by using python's versatile native syntax. This library utilizes the subscript syntax of python to preserve closer connection with prolog and internally transforms that into a data structure that is then easily and efficiently, extensible and interpolable from native python. It's about time, I introduce SocratesPy's syntax.
 
 ## How to use this library
 This library can work in two ways but only the first one is implemented right now, and the one that's implemented is transpiling a python file(for instance testFile.py) to another file(for instance transpiledTestFile.py), and you should use this command for this `[this repo's main.py] testFile.py transpiledTestFile.py`.
@@ -62,6 +62,22 @@ for unifier, rule in rules.lookup(SocraticQuery(weird[Z])):
     print(rule)
 ```
 which yields `weird[platypus]`. At this point we have covered most of the syntax and more examples would easily be found in `testFile.py`.
+
+## Integers and Constraints
+This library features a pure python constraint solver with constraint propagation and backtracking that currently only provides constraints on integers but not on lists. This constraint solver only works in finite domains and numbers by default are restricted to 0..255 but soon enough there will be an option to change that. It is important to note that search is automatically performed if constraints alone fail at providing a complete solution. Here's how you'd use it to find all numbers that, when multiplied results 50 in certain bounds.
+```
+multiplyTo50[A, B] = (A > 0) & (B > 0) & (A*B == 50)
+```
+Which looked up using the ususal methods would yield
+```
+multiplyTo50(1, 50)
+multiplyTo50(2, 25)
+multiplyTo50(5, 10)
+multiplyTo50(10, 5)
+multiplyTo50(25, 2)
+multiplyTo50(50, 1)
+```
+There exist more sophisticated examples that exist in `testFile.py`. 
 
 ## The Unifier
 The unifier is the object that contains the substitutions that when applied would transform your original query into your result. You can see this information as a bunch of equations like this
