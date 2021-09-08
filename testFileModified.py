@@ -49,9 +49,13 @@ for (unifier, _) in lst_rules.lookup(
 Fact('lst_length/2', [Fact('cons/2', [Term('a'), Fact('cons/2', [Term('b'), Fact('cons/2', [Term('c'), Term('nil')])])]), Var('N')])):
     print(utils.dict_as_eqs(Substitutions.optionally_resolve(unifier.env)))
 print('---~~Numbers~~---')
-lst_rules = KnowledgeBase({'semantic_trial/3': [Rule(Fact('semantic_trial/3', [Var('X'), Var('Y'), Var('Z')]), Goals([BinOp(Var('Y'), '==', BinOp(Var('X'), '+', Term(1))), Fact('inc/2', [Var('Y'), Var('Z')]), BinOp(Var('Z'), '==', BinOp(Var('X'), '+', Term(2)))]))], 'inc/2': [Rule(Fact('inc/2', [Var('X'), Var('Y')]), BinOp(Var('Y'), '==', BinOp(Var('X'), '+', Term(1))))], 'fac/2': [Rule(Fact('fac/2', [Term(0), Term(1)]), None), Rule(Fact('fac/2', [Var('N'), Var('F')]), Goals([BinOp(Var('N'), '>', Term(0)), BinOp(Var('F1'), '>', Term(0)), BinOp(Var('N1'), '==', BinOp(Var('N'), '-', Term(1))), BinOp(Var('F'), '==', BinOp(Var('N'), '*', Var('F1'))), Fact('fac/2', [Var('N1'), Var('F1')])]))], 'safediv/3': [Rule(Fact('safediv/3', [Var('A'), Var('B'), Var('X')]), Goals([BinOp(BinOp(Var('A'), '/', Var('B')), '==', Var('X')), BinOp(Var('B'), '>', Term(0)), BinOp(Var('X'), '>=', Term(1))]))]})
+lst_rules = KnowledgeBase({'semantic_trial/3': [Rule(Fact('semantic_trial/3', [Var('X'), Var('Y'), Var('Z')]), Goals([BinOp(Var('Y'), '==', BinOp(Var('X'), '+', Term(1))), Fact('inc/2', [Var('Y'), Var('Z')]), BinOp(Var('Z'), '==', BinOp(Var('X'), '+', Term(2)))]))], 'inc/2': [Rule(Fact('inc/2', [Var('X'), Var('Y')]), BinOp(Var('Y'), '==', BinOp(Var('X'), '+', Term(1))))], 'fac/2': [Rule(Fact('fac/2', [Term(0), Term(1)]), None), Rule(Fact('fac/2', [Var('N'), Var('F')]), Goals([BinOp(Var('N'), '>', Term(0)), BinOp(Var('F1'), '>', Term(0)), BinOp(Var('N1'), '==', BinOp(Var('N'), '-', Term(1))), BinOp(Var('F'), '==', BinOp(Var('N'), '*', Var('F1'))), Fact('fac/2', [Var('N1'), Var('F1')])]))], 'safediv/3': [Rule(Fact('safediv/3', [Var('A'), Var('B'), Var('X')]), Goals([BinOp(BinOp(Var('A'), '/', Var('B')), '==', Var('X')), BinOp(Var('B'), '>', Term(0)), BinOp(Var('X'), '>=', Term(1))]))], 'multiplyTo50/2': [Rule(Fact('multiplyTo50/2', [Var('A'), Var('B')]), Goals([BinOp(BinOp(Var('A'), '*', Var('B')), '==', Term(50)), BinOp(Var('A'), '>', Term(0)), BinOp(Var('B'), '>', Term(0))]))]})
 for (_, sub) in lst_rules.lookup(
 Fact('semantic_trial/3', [Var('L'), Term(8), Var('N')])):
+    print(sub)
+print('# Numbers that multiply upto 50')
+for (_, sub) in lst_rules.lookup(
+Fact('multiplyTo50/2', [Var('X'), Var('Y')])):
     print(sub)
 print('# Factorial')
 for (unifier, _) in lst_rules.lookup(

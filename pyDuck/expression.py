@@ -16,6 +16,10 @@ class Bounds:
                 domain.upper_bound = self.upper_bound
                 domain.lower_bound = self.lower_bound
 
+    def __eq__(self, other):
+        if not isinstance(other, Bounds): return False
+        return self.lower_bound == other.lower_bound and other.upper_bound == self.upper_bound
+
     def __str__(self):
         return f"{str(self.lower_bound)} .. {str(self.upper_bound)}"
 

@@ -105,8 +105,13 @@ with lst_rules in SocraticSolver:
     fac[N, F] = (N > 0) & (F1 > 0) & (N1 == N-1) & (F == N*F1) & fac[N1, F1]
 
     safediv[A, B, X] = (A / B == X) & (B > 0) & (X >= 1)
+    multiplyTo50[A, B] = (A*B == 50) & (A > 0) & (B > 0)
 
 for _, sub in lst_rules.lookup(SocraticQuery(semantic_trial[L, 8, N])):
+    print(sub)
+
+print("# Numbers that multiply upto 50")
+for _, sub in lst_rules.lookup(SocraticQuery(multiplyTo50[X, Y])):
     print(sub)
 
 print("# Factorial")

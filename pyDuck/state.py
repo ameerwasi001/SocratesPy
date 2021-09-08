@@ -30,8 +30,14 @@ class State:
     
     def set_constraints(self, constraints):
         solveable = True
-        for constraint in constraints:
-            solveable = solveable and constraint.constraint_domains()
+        all_domains = [var.domain for var in self.variables]
+        while True:
+            for constraint in constraints:
+                solveable = solveable and constraint.constraint_domains()
+            var_domains = [var.bounds for var in self.variables]
+            if var_domains == all_domains: break
+            if not solveable: break
+            all_domains = var_domains
         self.constraints = constraints
         self.solveable = solveable
         if self.solveable:
