@@ -1,11 +1,6 @@
-import utils
-from visitors import RulesVisitor
 from sys import stderr
-from functools import reduce
-from multipleDispatch import MultipleDispatch
-from unificationVisitor import Unifier, UniqueVariableSubstitutor, Substitutions, Substituter, RemoveNumberedExprVisitor, HasUnhyphenatedVariable, TopLevelBinOpCounter, ConstraintGenerator
-from nodes import Var, Term, Conjuction, BinOp, Fact, Goals, Rule, Rules, SystemEquations
-from pyDuck import State
+from unificationVisitor import Unifier, UniqueVariableSubstitutor, Substitutions, Substituter, RemoveNumberedExprVisitor, HasUnhyphenatedVariable, TopLevelBinOpCounter, ConstraintGenerator, SystemEquations
+from nodes import Var, Term, Conjuction, BinOp, Fact, Goals, Rule, Rules
 
 class KnowledgeBase:
     def __init__(self, knowledge):
@@ -81,10 +76,10 @@ class Query:
                             yield from solutions(index+1, equations.given_env(unified.env), unified)
             else:
                 yield Substituter(unifier.env).visit(goals)
-        yield from solutions(0, SystemEquations(ConstraintGenerator, Substituter, Substitutions()), Unifier())
+        yield from solutions(0, SystemEquations(Substitutions()), Unifier())
 
     def lookup_BinOp(self, binOp: BinOp):
-        constraintGenerator = SystemEquations(ConstraintGenerator, Substituter, Substitutions())
+        constraintGenerator = SystemEquations(Substitutions())
         constraintGenerator.add_equation(binOp)
         for solution in constraintGenerator.solve():
             substitutions = Substitutions()

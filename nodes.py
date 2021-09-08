@@ -1,5 +1,3 @@
-from pyDuck import State
-
 class Var:
     def __init__(self, value):
         self.name = value
@@ -146,61 +144,3 @@ class Rules:
         for k, v in self.env.items():
             new_env[k] = list(map(str, v))
         return str(new_env)
-
-class SystemEquations:
-    def __init__(self, constraintGenerator, substitutor, env):
-        self.eqs = []
-        self.solved = True
-        self.constraintGeneratorClass = constraintGenerator
-        self.substitutorClass = substitutor
-        self.substitutor = substitutor(env)
-        self.constraintGenerator = self.constraintGeneratorClass(env.clone())
-
-    def add_equation(self, eq):
-        self.eqs.append(eq)
-
-    def prepare_state(self):
-        constraintGenerator = self.constraintGenerator
-        constraints = []
-        for constraint in self.eqs:
-            constraints.append(constraintGenerator.generate_constraint(self.substitutor.visit(constraint)))
-        state = State.from_whole_expression(constraints)
-        self.solved = state.solved
-        return state
-
-    def propogate(self):
-        state = self.prepare_state()
-        if not state.solveable: return None
-        if state.solved: return {var_name: Term(var.value) for var_name, var in state.get_solved_state().items()}
-        return {var.name: Term(int(var.value)) for var in state.variables if var.instantiated()}
-
-    def solve(self):
-        state = self.prepare_state()
-        for solution in state.iterate_all_solutions():
-            yield {k:Term(v.value) for k,v in solution.items()}
-
-    def clone(self):
-        sys = SystemEquations(self.constraintGeneratorClass, self.substitutorClass, self.constraintGenerator.domains.clone())
-        sys.solved = self.solved
-        sys.eqs = self.eqs[:]
-        return sys
-
-    def given_env(self, env):
-        sys = SystemEquations(self.constraintGeneratorClass, self.substitutorClass, env)
-        sys.solved = self.solved
-        sys.eqs = self.eqs[:]
-        return sys
-
-    def substituted(self, env):
-        new_sys = self.given_env(env)
-        new_sys.eqs = [new_sys.substitutor.visit(eq) for eq in new_sys.eqs]
-        return new_sys
-
-    def __len__(self):
-        return len(self.eqs)
-    
-    def __str__(self):
-        return "{" + ", ".join(map(str, self.prepare_state().constraints)) + "}"
-
-    def __repr__(self):
-        return "{" + ", ".join(map(repr, self.prepare_state().constraints)) + "}"

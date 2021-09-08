@@ -3,7 +3,7 @@ from visitors import RulesVisitor
 from functools import reduce
 from multipleDispatch import MultipleDispatch
 from nodes import Var, Term, BinOp, Fact, Goals, Rule, Rules
-from pyDuck import Expression, Variable, Constraint
+from pyDuck import Expression, Variable, Constraint, State
 
 class DisjointOrderedSets:
     def __init__(self):
@@ -324,13 +324,16 @@ class ConstraintGenerator(RulesVisitor):
         left = self.visit(bin_op.left)
         right = self.visit(bin_op.right)
         op = bin_op.op
-        if op == "==": return left == right
-        elif op == ">": return left > right
-        elif op == ">=": return left >= right
-        elif op == "+": return left + right
-        elif op == "-": return left - right
-        elif op == "*": return left * right
-        elif op == "/": return left / right
+        visitation_map = {
+            "==": lambda a, b: a == b,
+            ">": lambda a, b: a > b,
+            ">=": lambda a, b: a >= b,
+            "+": lambda a, b: a + b,
+            "-": lambda a, b: a - b,
+            "*": lambda a, b: a * b,
+            "/": lambda a, b: a / b,
+        }
+        if op in visitation_map: return visitation_map[op](left, right)
         else: raise Exception(f"Unknown operator {op}")
 
     def visit_Fact(self, fact: Fact):
@@ -375,6 +378,61 @@ class HasUnhyphenatedVariable(RulesVisitor):
         return (not ("-" in var.name))
 
     def visit_Term(self, _): return False
+
+class SystemEquations:
+    def __init__(self, env):
+        self.eqs = []
+        self.solved = True
+        self.substitutor = Substituter(env)
+        self.constraintGenerator = ConstraintGenerator(env.clone())
+
+    def add_equation(self, eq):
+        self.eqs.append(eq)
+
+    def prepare_state(self):
+        constraints = []
+        for constraint in self.eqs:
+            constraints.append(self.constraintGenerator.generate_constraint(self.substitutor.visit(constraint)))
+        state = State.from_whole_expression(constraints)
+        self.solved = state.solved
+        return state
+
+    def propogate(self):
+        state = self.prepare_state()
+        if not state.solveable: return None
+        if state.solved: return {var_name: Term(var.value) for var_name, var in state.get_solved_state().items()}
+        return {var.name: Term(int(var.value)) for var in state.variables if var.instantiated()}
+
+    def solve(self):
+        state = self.prepare_state()
+        for solution in state.iterate_all_solutions():
+            yield {k:Term(v.value) for k,v in solution.items()}
+
+    def clone(self):
+        sys = SystemEquations(self.constraintGenerator.domains.clone())
+        sys.solved = self.solved
+        sys.eqs = self.eqs[:]
+        return sys
+
+    def given_env(self, env):
+        sys = SystemEquations(env)
+        sys.solved = self.solved
+        sys.eqs = self.eqs[:]
+        return sys
+
+    def substituted(self, env):
+        new_sys = self.given_env(env)
+        new_sys.eqs = [new_sys.substitutor.visit(eq) for eq in new_sys.eqs]
+        return new_sys
+
+    def __len__(self):
+        return len(self.eqs)
+    
+    def __str__(self):
+        return "{" + ", ".join(map(str, self.prepare_state().constraints)) + "}"
+
+    def __repr__(self):
+        return "{" + ", ".join(map(repr, self.prepare_state().constraints)) + "}"
 
 # # Unification Basic test
 # unifier = Unifier()
