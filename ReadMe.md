@@ -77,7 +77,7 @@ multiplyTo50(10, 5)
 multiplyTo50(25, 2)
 multiplyTo50(50, 1)
 ```
-There exist more sophisticated examples that exist in `testFile.py`. 
+There exist more sophisticated examples that exist in `testFile.py`. Note, that the only operators available right now are `+`, `-`, `*`, `/`, `>`, `==`, and `>=`.
 
 ## The Unifier
 The unifier is the object that contains the substitutions that when applied would transform your original query into your result. You can see this information as a bunch of equations like this
