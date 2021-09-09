@@ -1,5 +1,6 @@
 from fixedint import UInt32, UInt64
-from enum import Enum, auto
+from enum import Enum
+from .exceptions import DomainExceptionType, InvalidDomainException
 
 class DomainOperationResult(Enum):
     EmptyDomain = 0
@@ -13,7 +14,7 @@ class Domain:
         self.internalize(new_bounds)
 
     def initialize_from_one_int(self, domain_size):
-        if domain_size < 0: raise Exception("Negative Domain Sizes are invalid")
+        if domain_size < 0: raise InvalidDomainException(DomainExceptionType.Negative, None)
         self._lower_bound = 0
         self._upper_bound = domain_size
         self._size = self._upper_bound - self._lower_bound + 1
@@ -185,12 +186,12 @@ class Domain:
 
     @staticmethod
     def CreateDomainFromTwoInts(lower_bound, upper_bound):
-        if lower_bound > upper_bound: raise Exception("Negative Domain Sizes are invalid")
+        if lower_bound > upper_bound: raise InvalidDomainException(DomainExceptionType.Negative, None)
         domain_impl = Domain(lower_bound, upper_bound)
         return domain_impl
 
     def instantiated_value(self):
-        if not self.instantiated(): raise Exception("Trying to access InstantiatedValue of an uninstantiated domain.")
+        if not self.instantiated(): raise InvalidDomainException(DomainExceptionType.UnInstantiated, self)
         return self._lower_bound - self.offset
 
     def __eq__(self, other):

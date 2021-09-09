@@ -1,9 +1,9 @@
-from enum import Enum, auto
+from enum import Enum
 from .linkedList import LinkedList
 from .bounds import DomainOperationResult
 from .constraintOperation import ConstraintOperationResult
-from .expression import Expression, Variable, Bounds
 from .constraint import Constraint
+from .exceptions import UnsolvedException
 
 class StateOperationResult(Enum):
     Solved = 1
@@ -52,7 +52,7 @@ class State:
 
     def get_solved_state(self):
         if not self.solved: 
-            raise Exception("Not all variables are solved by constraint propogation, when the solution prompted for solution")
+            raise UnsolvedException()
         return {var.name:var for var in [var.clone() for var in self.variables]}
 
     def search_all_solutions(self):

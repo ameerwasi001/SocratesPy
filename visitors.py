@@ -1,6 +1,7 @@
 import ast
 import utils
 from nodes import Var, Term, Fact, BinOp, Conjuction, Goals, Rule, Rules
+from exceptions import SocraticSyntaxError
 from functools import *
 
 def make_expr(env): return TermCreator().visit(env)
@@ -92,7 +93,7 @@ class ExprVisitor(ast.NodeVisitor):
 
     def visit_Constant(self, node: ast.Constant):
         if str(node.value).isdigit(): return Term(int(node.value))
-        raise Exception(f"Unexpected type constant {str(node.value)}, only expected identifier or an integer")
+        raise SocraticSyntaxError(f"Unexpected type constant {str(node.value)}, only expected identifier or an integer")
 
     def visit_Name(self, node: ast.Name):
         return utils.make_id(node.id)
@@ -100,21 +101,21 @@ class ExprVisitor(ast.NodeVisitor):
 class ComparisionExprValidator(ast.NodeVisitor):
     def visit_Constant(self, node: ast.Constant):
         if not str(node.value).isdigit():
-            raise Exception(f"Unexpected type constant {str(node.value)}, only expected an integer")
+            raise SocraticSyntaxError(f"Unexpected type constant {str(node.value)}, only expected an integer")
 
     def visit_Name(self, node: ast.Name):
         if not node.id[0].isupper():
-            raise Exception(f"Unexpected term {str(node.id)}, only expected an integer term or a variable")
+            raise SocraticSyntaxError(f"Unexpected term {str(node.id)}, only expected an integer term or a variable")
 
     def visit_Compare(self, node: ast.Compare):
         if len(node.comparators) != 1:
-            raise Exception(f"Only expected one comparator, found {str(len(node.comparators))}")
+            raise SocraticSyntaxError(f"Only expected one comparator, found {str(len(node.comparators))}")
         if len(node.ops) != 1:
-            raise Exception(f"Only expected one operator, found {str(len(node.ops))}")
+            raise SocraticSyntaxError(f"Only expected one operator, found {str(len(node.ops))}")
         op = node.ops[0]
         possible_comparators = {ast.Eq, ast.Gt, ast.GtE}
         if not (any([isinstance(op, c) for c in possible_comparators])):
-            raise Exception(f"The operator {str(node.ops[0])} was unexpected, only expected ==, >=, or >")
+            raise SocraticSyntaxError(f"The operator {str(node.ops[0])} was unexpected, only expected ==, >=, or >")
         self.visit(node.left)
         self.visit(node.comparators[0])
 
@@ -131,7 +132,7 @@ class ComparisionExprGenerator(ast.NodeTransformer):
             ]
         for opClass, op_sym in op_map:
             if isinstance(op, opClass): return op_sym
-        else: raise Exception(f"Unsupported operator {ast.dump(op)}")
+        else: raise SocraticSyntaxError(f"Unsupported operator {ast.dump(op)}")
 
     def visit_Constant(self, node: ast.Constant):
         return Term(int(node.value))
@@ -192,17 +193,17 @@ class SyntaxValidator(ast.NodeVisitor):
 
     def visit(self, node):
         if any(list(map(lambda c: isinstance(node, c), self.allowed_nodes))): return super().visit(node)
-        else: raise Exception("Only subscript and name nodes allowed")
+        else: raise SocraticSyntaxError("Only subscript and name nodes allowed")
 
     def visit_Assign(self, node: ast.Assign):
         comparision_validator = ComparisionExprValidator()
         if len(node.targets) != 1:
-            raise Exception("Expected to only have one target")
+            raise SocraticSyntaxError("Expected to only have one target")
         target = node.targets[0]
         if isinstance(target, ast.Tuple) and len(target.elts) != 1:
-            raise Exception("Expected to only have one target")
+            raise SocraticSyntaxError("Expected to only have one target")
         if not isinstance(target, ast.Subscript):
-            raise Exception("Target is only allowed to be a subscript or a name")
+            raise SocraticSyntaxError("Target is only allowed to be a subscript or a name")
         if not isinstance(node.value, ast.Subscript):
             if isinstance(node.value, ast.BinOp) and isinstance(node.value.op, ast.BitAnd):
                 self.visit(node.value.left)
@@ -211,13 +212,13 @@ class SyntaxValidator(ast.NodeVisitor):
             elif isinstance(node.value, ast.BinOp) or isinstance(node.value, ast.Expr) or isinstance(node.value, ast.Compare):
                 comparision_validator.visit(node.value)
                 return
-            raise Exception("Assigments are only allowed to be subscripts or names")
+            raise SocraticSyntaxError("Assigments are only allowed to be subscripts or names")
         self.visit(target)
         self.visit(node.value)
 
     def visit_Name(self, node):
         if not node.id[0].islower():
-            raise Exception("Expected an identfier starting with a lowercase letter")
+            raise SocraticSyntaxError("Expected an identfier starting with a lowercase letter")
     
     def visit_BinOp(self, node: ast.BinOp):
         self.visit(node.right)
@@ -232,18 +233,18 @@ class SyntaxValidator(ast.NodeVisitor):
 
     def visit_Constant(self, node):
         if str(node.value).isdigit(): return Term(int(node.value))
-        raise Exception(f"Unexpected type constant {str(node.value)}, only expected identifier or an integer")
+        raise SocraticSyntaxError(f"Unexpected type constant {str(node.value)}, only expected identifier or an integer")
 
     def visit_Subscript(self, node: ast.Subscript):
         if not (isinstance(node.value, ast.Name) and len(node.value.id) > 0 and node.value.id[0].islower()):
-            raise Exception("Expected an identfier starting with a lowercase letter")
+            raise SocraticSyntaxError("Expected an identfier starting with a lowercase letter")
         if isinstance(node.slice.value, ast.Subscript):
             self.visit_Subscript(node.slice.value)
         elif isinstance(node.slice.value, ast.Constant):
             self.visit_Constant(node.slice.value)
         elif not isinstance(node.slice.value, ast.Name):
             if not (isinstance(node.slice.value, ast.Tuple) and all(map(lambda a: self.visit, node.slice.value.elts))):
-                raise Exception("Only names or numbers as subscripts are allowed")
+                raise SocraticSyntaxError("Only names or numbers as subscripts are allowed")
 
 class RulesVisitor:
     def visit(self, node, *args, **kwargs):
@@ -318,7 +319,7 @@ class CorrectArgumentRules(RulesVisitor):
         if vals is None:
             return
         if not (len(fact) in vals):
-            raise Exception(f"{str(len(fact))} is an invalid arity for {fact.name}")
+            raise SocraticSyntaxError(f"{str(len(fact))} is an invalid arity for {fact.name}")
         list(map(self.visit, fact.args))
 
     def visit_Goals(self, goals: Goals):

@@ -1,6 +1,6 @@
 import utils
 from visitors import RulesVisitor
-from functools import reduce
+from exceptions import SocraticSyntaxError, UnresolvedRelationException, UndefinedVariableException, InternalErrorException
 from multipleDispatch import MultipleDispatch
 from nodes import Var, Term, BinOp, Fact, Goals, Rule, Rules
 from pyDuck import Expression, Variable, Constraint, State
@@ -64,7 +64,7 @@ class DisjointOrderedSets:
                     if not (preferred_hyphens and ("-" in defined)):
                         break
             if defined == None:
-                if raises: raise Exception(f"Could not resolve relation because none of {rel} has a known value")
+                if raises: raise UnresolvedRelationException(rel)
                 else: defined = Var(last)
             for k in rel:
                 definitions[k] = defined
@@ -274,7 +274,7 @@ class Resolver(RulesVisitor):
     def visit_Var(self, var: Var):
         val = self.env.get_variable(var.name)
         if val == None:
-            raise Exception(f"Could not get variable {var}, since it has no definitions and is only related to {self.env.relations.sets}")
+            raise UndefinedVariableException(var, self.env.relations.sets)
         return val
 
     def visit_BinOp(self, bin_op: BinOp):
@@ -334,16 +334,16 @@ class ConstraintGenerator(RulesVisitor):
             "/": lambda a, b: a / b,
         }
         if op in visitation_map: return visitation_map[op](left, right)
-        else: raise Exception(f"Unknown operator {op}")
+        else: raise SocraticSyntaxError(f"Unknown operator {op}")
 
     def visit_Fact(self, fact: Fact):
-        raise Exception(f"{str(fact)} should not be here in a supposed constraint. Get your syntax validator in order.")
+        raise InternalErrorException(f"{str(fact)} should not be here in a supposed constraint. Get your syntax validator in order.")
 
     def visit_Goals(self, goals: Goals):
-        raise Exception(f"{str(goals)} should not be here in a supposed constraint. Get your syntax validator in order.")
+        raise InternalErrorException(f"{str(goals)} should not be here in a supposed constraint. Get your syntax validator in order.")
 
     def visit_Rule(self, rule: Rule):
-        return Exception(f"{str(rule)} should not be here in a supposed constraint. Get your syntax validator in order.")
+        return InternalErrorException(f"{str(rule)} should not be here in a supposed constraint. Get your syntax validator in order.")
 
     def generate_constraint(self, node):
         return Constraint(self.visit(node))
