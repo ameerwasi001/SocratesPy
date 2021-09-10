@@ -52,8 +52,9 @@ class Query:
                 goal = goals.goals[index]
 
                 if isinstance(goal, BinOp):
-                    equations.add_equation(Substituter(unifier.env).visit(goal))
-                    propogation = equations.propogate()
+                    equations.add_equation(goal)
+                    new_equations = equations.substituted(unifier.env)
+                    propogation = new_equations.propogate()
                     if propogation is None: return
                     new_unifier = Unifier()
                     new_unifier.env.substitutions = propogation
@@ -65,8 +66,8 @@ class Query:
                                 substitutions.substitutions = solution
                                 unified = Unifier.merge(Unifier.inheriting(unifier), Unifier.from_env(substitutions))
                                 if unified == None: continue
-                                yield from solutions(index+1, equations.given_env(unified.env), unified)
-                        else: yield from solutions(index+1, equations.clone(), unified)
+                                yield from solutions(index+1, new_equations.given_env(unified.env), unified)
+                        else: yield from solutions(index+1, new_equations.clone(), unified)
                 else:
                     for item in self.lookup(Substituter(unifier.env).visit(goal)):
                         new_unifier = Unifier()
