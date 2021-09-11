@@ -4,7 +4,7 @@ from nodes import Var, Term, Fact, BinOp, Conjuction, Goals, Rule, Rules
 from exceptions import SocraticSyntaxError
 from functools import *
 
-def make_expr(env): return TermCreator().visit(env)
+def make_expr(env): return UniqueUnderscore().visit(TermCreator().visit(env))
 
 def make_code_and_validate_nodes(target_name, body, nodes_path, solver_path):
     validator = SyntaxValidator()
@@ -12,9 +12,10 @@ def make_code_and_validate_nodes(target_name, body, nodes_path, solver_path):
     visitor = FullTransformerVisitor()
     visitor.initialize()
     list(map(visitor.visit, body))
-    rules = make_expr(visitor.env)
+    rules = TermCreator().visit(visitor.env)
     goalCreator = GoalCreator()
     rules = goalCreator.visit(rules)
+    rules = UniqueUnderscore().visit(rules)
     arity_checker = CorrectArgumentRules(rules)
     arity_checker.visit_all(rules)
     python_code_rules = RulesToPython().visit(rules)
@@ -46,8 +47,9 @@ class NodeFinderVistor(ast.NodeTransformer):
             validator.visit(query)
             expr = ExprVisitor().visit(query)
             goal_expr = GoalCreator().visit(expr)
-            numbered_term_expr = TermCreator().visit(expr)
-            return ast.parse(RulesToPython().visit(numbered_term_expr))
+            numbered_term_expr = TermCreator().visit(goal_expr)
+            underscore_free_expr = UniqueUnderscore().visit(numbered_term_expr)
+            return ast.parse(RulesToPython().visit(underscore_free_expr))
         return self.generic_visit(node)
 
     def visit_With(self, node: ast.With):
@@ -353,3 +355,37 @@ class RulesToPython(RulesVisitor):
 
     def visit_Var(self, var: Var):
         return "Var(\"" + var.name + "\")"
+
+class UniqueUnderscore(RulesVisitor):
+    def __init__(self, *args, **kwargs):
+        self.underscores = 0
+        super().__init__(*args, **kwargs)
+
+    def visit_Rules(self, rules: Rules):
+        return Rules({k:list(map(self.visit, vs)) for k, vs in rules.env.items()})
+
+    def visit_Rule(self, rule: Rule):
+        return Rule(self.visit(rule.fact), None if rule.condition == None else self.visit(rule.condition))
+
+    def visit_BinOp(self, bin_op: BinOp):
+        return BinOp(self.visit(bin_op.left), bin_op.op, self.visit(bin_op.right))
+
+    def visit_Fact(self, fact: Fact):
+        return Fact(fact.name, list(map(self.visit, fact.args)))
+
+    def visit_Conjuction(self, conjuction: Conjuction):
+        return Conjuction(self.visit(conjuction.left), self.visit(conjuction.right))
+
+    def visit_BinOp(self, bin_op: BinOp):
+        return BinOp(self.visit(bin_op.left), bin_op.op, self.visit(bin_op.right))
+
+    def visit_Goals(self, goals: Goals):
+        return Goals(list(map(self.visit, goals.goals)))
+
+    def visit_Term(self, term: Term): return term
+
+    def visit_Var(self, var: Var):
+        if var.name == "_":
+            self.underscores += 1
+            return Var(f"U-{str(self.underscores)}")
+        return var

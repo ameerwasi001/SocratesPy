@@ -69,15 +69,15 @@ for _, sub in addition_rules.lookup(SocraticQuery(add[A, s[A], s[s[s[0]]]])):
 print("---~~List~~---")
 with lst_rules in SocraticSolver:
     lst[nil]
-    lst[cons[L, X]] = lst[X]
+    lst[cons[_, X]] = lst[X]
 
     lst_length[Xs, L] = lst_length[Xs, 0, L]
 
     lst_length[nil, L, L]
     lst_length[cons[X, Xs], T, L] = (L>T) & (T1 == T+1) & lst_length[Xs, T1, L]
 
-    lst_member[X, cons[X, M]]
-    lst_member[X, cons[P, TAIL]] = lst_member[X, TAIL]
+    lst_member[X, cons[X, _]]
+    lst_member[X, cons[_, TAIL]] = lst_member[X, TAIL]
 
     lst_concat[nil, L, L]
     lst_concat[cons[X1, L1], L2, cons[X1, L3]] = lst_concat[L1, L2, L3]
@@ -93,7 +93,7 @@ for unifier, _ in lst_rules.lookup(SocraticQuery(lst_concat[cons[x, cons[y, nil]
     print(utils.dict_as_eqs(Substitutions.optionally_resolve(unifier.env)))
 
 print("# Count Members")
-for unifier, _ in lst_rules.lookup(SocraticQuery(lst_length[cons[a, cons[b, cons[c, nil]]], N])):
+for unifier, _ in lst_rules.lookup(SocraticQuery(lst_length[cons[a, cons[b, cons[c, nil]]], X])):
     print(utils.dict_as_eqs(Substitutions.optionally_resolve(unifier.env)))
 
 print("---~~Numbers~~---")
