@@ -258,7 +258,7 @@ class RemoveNumberedExprVisitor(RulesVisitor):
         ls = list(map(self.visit, fact.args))
         return Fact(utils.remove_arity_from_name(fact.name), ls)
 
-    def visit_Conjuction(self, goals: Goals):
+    def visit_Goals(self, goals: Goals):
         return Goals(list(map(self.visit, goals.goals)))
 
     def visit_Var(self, var: Var): return var

@@ -46,9 +46,9 @@ class NodeFinderVistor(ast.NodeTransformer):
             validator = SyntaxValidator()
             validator.visit(query)
             expr = ExprVisitor().visit(query)
-            goal_expr = GoalCreator().visit(expr)
-            numbered_term_expr = TermCreator().visit(goal_expr)
-            underscore_free_expr = UniqueUnderscore().visit(numbered_term_expr)
+            numbered_term_expr = TermCreator().visit(expr)
+            goal_expr = GoalCreator().visit(numbered_term_expr)
+            underscore_free_expr = UniqueUnderscore().visit(goal_expr)
             return ast.parse(RulesToPython().visit(underscore_free_expr))
         return self.generic_visit(node)
 
@@ -270,6 +270,8 @@ class TermCreator(RulesVisitor):
 
     def visit_Conjuction(self, conjuction: Conjuction):
         return Conjuction(self.visit(conjuction.left), self.visit(conjuction.right))
+
+    def visit_Goals(self, goals: Goals): return Goals(list(map(self.visit, goals.goals)))
 
     def visit_Var(self, var: Var): return var
     def visit_Term(self, term: Term): return term

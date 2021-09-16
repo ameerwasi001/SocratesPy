@@ -59,7 +59,7 @@ class Conjuction:
         self.left = left
     
     def __str__(self):
-        return f"{str(self.right)} & {str(self.left)}"
+        return f"{str(self.right)} |&| {str(self.left)}"
 
     def __eq__(self, other):
         if not isinstance(other, Conjuction): return False

@@ -82,6 +82,9 @@ with lst_rules in SocraticSolver:
     lst_concat[nil, L, L]
     lst_concat[cons[X1, L1], L2, cons[X1, L3]] = lst_concat[L1, L2, L3]
 
+    lst_reverse[nil, nil]
+    lst_reverse[cons[H, T], RevList] = lst_reverse[T, RevT] & lst_concat[RevT, cons[H, nil], RevList]
+
 lst1 = Fact("cons", [Term("x"), Fact("cons", [Term("y"), Term("nil")])])
 lst2 = Fact("cons", [Term("a"), Fact("cons", [Term("b"), Term("nil")])])
 
@@ -89,7 +92,9 @@ for _, sub in lst_rules.lookup(make_expr(Fact("lst_member", [Term("x"), lst1])))
     print(sub)
 
 print("# Concatenation")
-for unifier, _ in lst_rules.lookup(SocraticQuery(lst_concat[cons[x, cons[y, nil]], cons[a, cons[b, nil]], Res])):
+for unifier, _ in lst_rules.lookup(SocraticQuery(
+    lst_concat[cons[x, cons[y, nil]], cons[a, cons[b, nil]], Res] & lst_reverse[Res, Rev]
+    )):
     print(utils.dict_as_eqs(Substitutions.optionally_resolve(unifier.env)))
 
 print("# Count Members")
