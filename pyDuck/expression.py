@@ -154,29 +154,25 @@ class Expression:
 				leftBounds.upper_bound * rightBounds.upper_bound
 			)
 
+        def one_if_zero(v): return 1 if v == 0 else v
+
         def propogator(first, second, enforce):
             result = ConstraintOperationResult.Undecided
 
-            if second.bounds.upper_bound == 0 or second.bounds.lower_bound == 0:
-                return result
-
-            if first.bounds.lower_bound < enforce.lower_bound // second.bounds.upper_bound:
-                first.bounds.lower_bound = enforce.lower_bound // second.bounds.upper_bound
+            if first.bounds.lower_bound < enforce.lower_bound // one_if_zero(second.bounds.upper_bound):
+                first.bounds.lower_bound = enforce.lower_bound // one_if_zero(second.bounds.upper_bound)
                 result = ConstraintOperationResult.Propogated
 
-            if first.bounds.upper_bound > enforce.upper_bound // second.bounds.lower_bound:
-                first.bounds.upper_bound = enforce.upper_bound // second.bounds.lower_bound
+            if first.bounds.upper_bound > enforce.upper_bound // one_if_zero(second.bounds.lower_bound):
+                first.bounds.upper_bound = enforce.upper_bound // one_if_zero(second.bounds.lower_bound)
                 result = ConstraintOperationResult.Propogated
 
-            if first.bounds.upper_bound == 0 or first.bounds.lower_bound == 0:
-                return result
-
-            if second.bounds.lower_bound < enforce.lower_bound // first.bounds.upper_bound:
-                second.bounds.lower_bound = enforce.lower_bound // first.bounds.upper_bound
+            if second.bounds.lower_bound < enforce.lower_bound // one_if_zero(first.bounds.upper_bound):
+                second.bounds.lower_bound = enforce.lower_bound // one_if_zero(first.bounds.upper_bound)
                 result = ConstraintOperationResult.Propogated
 
-            if second.bounds.upper_bound > enforce.upper_bound // first.bounds.lower_bound:
-                second.bounds.upper_bound = enforce.upper_bound // first.bounds.lower_bound
+            if second.bounds.upper_bound > enforce.upper_bound // one_if_zero(first.bounds.lower_bound):
+                second.bounds.upper_bound = enforce.upper_bound // one_if_zero(first.bounds.lower_bound)
                 result = ConstraintOperationResult.Propogated
 
             if first.bounds.lower_bound > first.bounds.upper_bound or second.bounds.lower_bound > second.bounds.upper_bound:
