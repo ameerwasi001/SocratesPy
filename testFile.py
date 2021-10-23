@@ -22,8 +22,8 @@ print("---~~Living~~---")
 
 with life_rules in SocraticSolver:
     human[miles]
-    human[samael]
-    male[samael]
+    human["Samael"]
+    male["Samael"]
     male[jordon]
     male[jim]
     human[socrates]
@@ -31,9 +31,9 @@ with life_rules in SocraticSolver:
     mortal[Z] = boy[Z]
     boy[A] = male[A] & human[A]
 
-    parent[miles, samael]
-    parent[sara, samael]
-    parent[amanda, samael]
+    parent[miles, "Samael"]
+    parent[sara, "Samael"]
+    parent[amanda, "Samael"]
     parent[steven, jordon]
     parent[laura, jordon]
     parent[cassandra, jim]

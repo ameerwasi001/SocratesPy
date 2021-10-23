@@ -95,15 +95,16 @@ class ExprVisitor(ast.NodeVisitor):
 
     def visit_Constant(self, node: ast.Constant):
         if str(node.value).isdigit(): return Term(int(node.value))
-        raise SocraticSyntaxError(f"Unexpected type constant {str(node.value)}, only expected identifier or an integer")
+        elif type(node.value) == str: return Term(node.value)
+        else: return Term(str(node.value))
 
     def visit_Name(self, node: ast.Name):
         return utils.make_id(node.id)
 
 class ComparisionExprValidator(ast.NodeVisitor):
     def visit_Constant(self, node: ast.Constant):
-        if not str(node.value).isdigit():
-            raise SocraticSyntaxError(f"Unexpected type constant {str(node.value)}, only expected an integer")
+        if (not str(node.value).isdigit()) and (not type(node.value) == str):
+            raise SocraticSyntaxError(f"Unexpected type constant {str(node.value)}, only expected integer or string")
 
     def visit_Name(self, node: ast.Name):
         if not node.id[0].isupper():
@@ -235,7 +236,9 @@ class SyntaxValidator(ast.NodeVisitor):
 
     def visit_Constant(self, node):
         if str(node.value).isdigit(): return Term(int(node.value))
-        raise SocraticSyntaxError(f"Unexpected type constant {str(node.value)}, only expected identifier or an integer")
+        elif type(node.value) == str: return Term(node.value)
+        else:
+            raise SocraticSyntaxError(f"Unexpected type constant {str(node.value)}, only expected identifier, string, or integer")
 
     def visit_Subscript(self, node: ast.Subscript):
         if not (isinstance(node.value, ast.Name) and len(node.value.id) > 0 and node.value.id[0].islower()):
