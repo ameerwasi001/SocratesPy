@@ -327,6 +327,7 @@ class ConstraintGenerator(RulesVisitor):
         visitation_map = {
             "==": lambda a, b: a == b,
             ">": lambda a, b: a > b,
+            "<": lambda a, b: a < b,
             ">=": lambda a, b: a >= b,
             "+": lambda a, b: a + b,
             "-": lambda a, b: a - b,
