@@ -329,6 +329,7 @@ class ConstraintGenerator(RulesVisitor):
             ">": lambda a, b: a > b,
             "<": lambda a, b: a < b,
             ">=": lambda a, b: a >= b,
+            "<=": lambda a, b: a <= b,
             "+": lambda a, b: a + b,
             "-": lambda a, b: a - b,
             "*": lambda a, b: a * b,

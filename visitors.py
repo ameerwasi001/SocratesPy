@@ -116,7 +116,7 @@ class ComparisionExprValidator(ast.NodeVisitor):
         if len(node.ops) != 1:
             raise SocraticSyntaxError(f"Only expected one operator, found {str(len(node.ops))}")
         op = node.ops[0]
-        possible_comparators = {ast.Eq, ast.Gt, ast.Lt, ast.GtE}
+        possible_comparators = {ast.Eq, ast.Gt, ast.Lt, ast.GtE, ast.LtE}
         if not (any([isinstance(op, c) for c in possible_comparators])):
             raise SocraticSyntaxError(f"The operator {str(node.ops[0])} was unexpected, only expected ==, >=, or >")
         self.visit(node.left)
@@ -130,7 +130,7 @@ class ComparisionExprValidator(ast.NodeVisitor):
 class ComparisionExprGenerator(ast.NodeTransformer):
     def find_correct_operator(self, op: ast.AST):
         op_map = [
-            (ast.Eq, "=="), (ast.Gt, ">"), (ast.GtE, ">="), (ast.Lt, "<"),
+            (ast.Eq, "=="), (ast.Gt, ">"), (ast.GtE, ">="), (ast.Lt, "<"), (ast.LtE, "<="),
             (ast.Add, "+"), (ast.Sub, "-"), (ast.Mult, "*"), (ast.Div, "/")
             ]
         for opClass, op_sym in op_map:

@@ -31,6 +31,7 @@ class Operators(Enum):
     GT = 5
     LT = 6
     GTE = 7
+    LTE = 8
 
 class Expression:
     def initialize_from_nothing(self): pass
@@ -424,6 +425,56 @@ class Expression:
         expr = Expression(self, other)
         expr.op = Operators.LT
         expr.evaluate = lambda l, r: 1 if l.value < r.value else 0
+        expr.evaluate_bounds = evaluateBounds
+        expr.propagator = propogator
+        return expr
+
+    def __le__(self, other):
+        def evaluateBounds(l, r):
+            leftBounds = l.get_updated_bounds()
+            rightBounds = r.get_updated_bounds()
+            return Bounds(
+				1 if leftBounds.upper_bound <= rightBounds.lower_bound else 0,
+				1 if leftBounds.lower_bound <= leftBounds.upper_bound else 0
+			)
+
+        def propogator(first, second, enforce):
+            result = ConstraintOperationResult.Undecided
+            if enforce.lower_bound == 0 and enforce.lower_bound < enforce.upper_bound: 
+                return result
+
+            if enforce.lower_bound > 0:
+                if (second.bounds.lower_bound < first.bounds.lower_bound):
+                    second.bounds.lower_bound = first.bounds.lower_bound;
+                    result = ConstraintOperationResult.Propogated;
+
+                if (first.bounds.upper_bound > second.bounds.upper_bound):
+                    first.bounds.upper_bound = second.bounds.upper_bound;
+                    result = ConstraintOperationResult.Propogated;
+
+                if (first.bounds.lower_bound > second.bounds.upper_bound):
+                    result = ConstraintOperationResult.Violated;
+
+            elif enforce.upper_bound == 0:
+                if (first.bounds.lower_bound <= second.bounds.lower_bound):
+                    first.bounds.lower_bound = second.bounds.lower_bound + 1;
+                    result = ConstraintOperationResult.Propogated;
+
+                if (second.bounds.upper_bound >= first.bounds.upper_bound):
+                    second.bounds.upper_bound = first.bounds.upper_bound - 1;
+                    result = ConstraintOperationResult.Propogated;
+
+                if (first.bounds.upper_bound <= second.bounds.lower_bound):
+                    result = ConstraintOperationResult.Violated;
+
+            if (first.bounds.lower_bound > first.bounds.upper_bound or second.bounds.lower_bound > second.bounds.upper_bound):
+                result = ConstraintOperationResult.Violated
+
+            return result
+
+        expr = Expression(self, other)
+        expr.op = Operators.LTE
+        expr.evaluate = lambda l, r: 1 if l.value <= r.value else 0
         expr.evaluate_bounds = evaluateBounds
         expr.propagator = propogator
         return expr
