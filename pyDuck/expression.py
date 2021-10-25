@@ -444,30 +444,30 @@ class Expression:
                 return result
 
             if enforce.lower_bound > 0:
-                if (second.bounds.lower_bound < first.bounds.lower_bound):
-                    second.bounds.lower_bound = first.bounds.lower_bound;
-                    result = ConstraintOperationResult.Propogated;
+                if second.bounds.lower_bound < first.bounds.lower_bound:
+                    second.bounds.lower_bound = first.bounds.lower_bound
+                    result = ConstraintOperationResult.Propogated
 
-                if (first.bounds.upper_bound > second.bounds.upper_bound):
-                    first.bounds.upper_bound = second.bounds.upper_bound;
-                    result = ConstraintOperationResult.Propogated;
+                if first.bounds.upper_bound > second.bounds.upper_bound:
+                    first.bounds.upper_bound = second.bounds.upper_bound
+                    result = ConstraintOperationResult.Propogated
 
-                if (first.bounds.lower_bound > second.bounds.upper_bound):
-                    result = ConstraintOperationResult.Violated;
+                if first.bounds.lower_bound > second.bounds.upper_bound:
+                    result = ConstraintOperationResult.Violated
 
             elif enforce.upper_bound == 0:
-                if (first.bounds.lower_bound <= second.bounds.lower_bound):
-                    first.bounds.lower_bound = second.bounds.lower_bound + 1;
-                    result = ConstraintOperationResult.Propogated;
+                if first.bounds.lower_bound <= second.bounds.lower_bound:
+                    first.bounds.lower_bound = second.bounds.lower_bound + 1
+                    result = ConstraintOperationResult.Propogated
 
-                if (second.bounds.upper_bound >= first.bounds.upper_bound):
-                    second.bounds.upper_bound = first.bounds.upper_bound - 1;
-                    result = ConstraintOperationResult.Propogated;
+                if second.bounds.upper_bound >= first.bounds.upper_bound:
+                    second.bounds.upper_bound = first.bounds.upper_bound - 1
+                    result = ConstraintOperationResult.Propogated
 
-                if (first.bounds.upper_bound <= second.bounds.lower_bound):
-                    result = ConstraintOperationResult.Violated;
+                if first.bounds.upper_bound <= second.bounds.lower_bound:
+                    result = ConstraintOperationResult.Violated
 
-            if (first.bounds.lower_bound > first.bounds.upper_bound or second.bounds.lower_bound > second.bounds.upper_bound):
+            if first.bounds.lower_bound > first.bounds.upper_bound or second.bounds.lower_bound > second.bounds.upper_bound:
                 result = ConstraintOperationResult.Violated
 
             return result
