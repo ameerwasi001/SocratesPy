@@ -12,9 +12,9 @@ class Bounds:
         if self.assoc_domain_stack is None: return
         for domInt in self.assoc_domain_stack:
             domain = domInt.domain
-            for value in domain.clone():
-                domain.upper_bound = self.upper_bound
-                domain.lower_bound = self.lower_bound
+            for _ in domain.clone():
+                domain.upper_bound = self.upper_bound if domain.upper_bound > self.upper_bound else domain.upper_bound
+                domain.lower_bound = self.lower_bound if domain.lower_bound < self.lower_bound else domain.lower_bound
 
     def __eq__(self, other):
         if not isinstance(other, Bounds): return False
