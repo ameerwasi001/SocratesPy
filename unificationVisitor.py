@@ -310,8 +310,8 @@ class ConstraintGenerator(RulesVisitor):
 
     def get_domain(self, name):
         domain = self.domains.get_variable(name)
-        if not isinstance(domain, Term): return (0, 256)
-        if not isinstance(domain.name, int): return (0, 256)
+        if not isinstance(domain, Term): return (0, 255)
+        if not isinstance(domain.name, int): return (0, 255)
         return (domain.name, domain.name)
 
     def visit_Term(self, term: Term): return Expression(int(term.name))
