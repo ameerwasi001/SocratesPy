@@ -102,7 +102,7 @@ for unifier, _ in lst_rules.lookup(SocraticQuery(lst_length[cons[a, cons[b, cons
     print(utils.dict_as_eqs(Substitutions.optionally_resolve(unifier.env)))
 
 print("---~~Numbers~~---")
-with lst_rules in SocraticSolver:
+with num_rules in SocraticSolver:
     semantic_trial[X, Y, Z] = (Y == X+1) & inc[Y, Z] & (Z == X+2)
     inc[X, Y] = Y == X+1
 
@@ -112,13 +112,13 @@ with lst_rules in SocraticSolver:
     safediv[A, B, X] = (A / B == X) & (B > 0) & (X >= 1)
     multiplyTo50[A, B] = (A*B == 50)
 
-for _, sub in lst_rules.lookup(SocraticQuery(semantic_trial[L, 8, N])):
+for _, sub in num_rules.lookup(SocraticQuery(semantic_trial[L, 8, N])):
     print(sub)
 
 print("# Numbers that multiply upto 50")
-for _, sub in lst_rules.lookup(SocraticQuery(multiplyTo50[X, Y])):
+for _, sub in num_rules.lookup(SocraticQuery(multiplyTo50[X, Y])):
     print(sub)
 
 print("# Factorial")
-for unifier, _ in lst_rules.lookup(SocraticQuery(fac[4, F])):
+for unifier, _ in num_rules.lookup(SocraticQuery(fac[4, F])):
     print(utils.dict_as_eqs(Substitutions.optionally_resolve(unifier.env)))

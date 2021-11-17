@@ -6,7 +6,7 @@ from functools import *
 
 def make_expr(env): return UniqueUnderscore().visit(TermCreator().visit(env))
 
-def make_code_and_validate_nodes(target_name, body, nodes_path, solver_path):
+def make_code_and_validate_nodes(target_name, body, solver_path):
     validator = SyntaxValidator()
     list(map(validator.visit, body))
     visitor = FullTransformerVisitor()
@@ -27,7 +27,7 @@ def create_knowledgebase(nodes_path, name, code):
     my_tree = ast.parse(code)
     node_finder = NodeFinderVistor()
     new_tree = node_finder.initialize(nodes_path, name).visit(my_tree)
-    python_code = NodeFinderVistor().visit(my_tree)
+    python_code = node_finder.visit(new_tree)
     if node_finder.imported:
         import_tree = ast.parse(python_imports)
         python_code.body.insert(0, import_tree)
@@ -49,6 +49,7 @@ class NodeFinderVistor(ast.NodeTransformer):
             numbered_term_expr = TermCreator().visit(expr)
             goal_expr = GoalCreator().visit(numbered_term_expr)
             underscore_free_expr = UniqueUnderscore().visit(goal_expr)
+            self.imported = True
             return ast.parse(RulesToPython().visit(underscore_free_expr))
         return self.generic_visit(node)
 
@@ -62,9 +63,8 @@ class NodeFinderVistor(ast.NodeTransformer):
         left = comp_expr.left
         if not (isinstance(left, ast.Name) and right.id == "SocraticSolver" and isinstance(right, ast.Name)):
             return self.generic_visit(node)
-        imported = self.imported
         self.imported = True
-        return make_code_and_validate_nodes(left.id, node.body, self.nodes_path, self.solver_path)
+        return make_code_and_validate_nodes(left.id, node.body, self.solver_path)
 
 class ExprVisitor(ast.NodeVisitor):
     def visit_BinOp(self, node: ast.BinOp):
