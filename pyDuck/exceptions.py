@@ -12,7 +12,7 @@ class InvalidDomainException(Exception):
 
     def __str__(self):
         if self.exception_type == DomainExceptionType.Negative: return "Negative Domain Sizes are invalid"
-        elif self.exception_type == InvalidDomainException.UnInstantiated: return f"Trying to access InstantiatedValue of an uninstantiated domain {self.domain}"
+        elif self.exception_type == DomainExceptionType.UnInstantiated: return f"Trying to access InstantiatedValue of an uninstantiated domain {self.domain}"
 
     def repr(self): return str(self)
 

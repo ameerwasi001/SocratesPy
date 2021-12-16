@@ -175,15 +175,23 @@ class State:
         node = lst.head.head
 
         while node != None:
-            if node.value.size() < temp.value.size():
+            if node.size() < temp.size():
                 temp = node
 
-            if temp.value.size() == 1: break
-
+            if temp.size() == 1: break
             node = node.tail
-
         lst.remove(temp)
         return temp
+    # def get_most_constrained_variable(self, lst):
+    #     temp = lst.head
+    #     node = lst.head
+
+    #     while not (node is None):
+    #         if node.data.size() < temp.data.size(): temp = node
+    #         if temp.data.size() == 1: break
+    #         node = node.nextNode
+    #     lst.remove(temp.data)
+    #     return temp.data
 
     def backtrack_variable(self, var_prune, result):
         self.backtracks += 1
